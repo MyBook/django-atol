@@ -1,12 +1,8 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-SECRET_KEY = 'ww+)l1sinlrul66@%zcxm)y-w6@t&!-d#ipi3__x5))&yq5ow^'
-
+SECRET_KEY = 'super-secret-string'
 DEBUG = False
-
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -61,26 +57,6 @@ DATABASES = {
         'PASSWORD': 'hSFzCPZYzyhF88Up',
     }
 }
-DATABASES['slave'] = DATABASES['default']
-
-
-# Password validation
-# https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
 
 
 # Caches
@@ -92,24 +68,9 @@ CACHES = {
 }
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/1.11/topics/i18n/
-
-LANGUAGE_CODE = 'ru-RU'
-
-TIME_ZONE = 'Europe/Moscow'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
-STATIC_URL = '/static/'
 CELERY_ALWAYS_EAGER = True
 CELERY_IGNORE_RESULT = True
 

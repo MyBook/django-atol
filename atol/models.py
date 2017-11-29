@@ -12,15 +12,15 @@ from model_utils import Choices
 
 from atol.signals import receipt_failed, receipt_initiated, receipt_received
 
-logger = logging.getLogger('atol')
+logger = logging.getLogger(__name__)
 
 
 ReceiptStatus = Choices(
-    ('created', 'Ожидает инициации в системе оператора'),
-    ('initiated', 'Иницирован в системе оператора'),
-    ('received', 'Получен от оператора'),
-    ('no_email_phone', 'Отсутствует email/phone'),
-    ('failed', 'Ошибка'),
+    ('created', _('Ожидает инициации в системе оператора')),
+    ('initiated', _('Иницирован в системе оператора')),
+    ('received', _('Получен от оператора')),
+    ('no_email_phone', _('Отсутствует email/phone')),
+    ('failed', _('Ошибка')),
 )
 
 

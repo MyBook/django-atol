@@ -2,6 +2,10 @@ class NoEmailError(Exception):
     pass
 
 
+class MissingReceipt(Exception):
+    pass
+
+
 class AtolException(Exception):
     pass
 

@@ -12,10 +12,10 @@ from atol.core import AtolAPI
 from atol.models import ReceiptStatus
 from atol.exceptions import AtolUnrecoverableError, NoEmailError
 
-logger = logging.getLogger('atol')
+logger = logging.getLogger(__name__)
 
 
-@shared_task(name='atol_create_receipt', bind=True, max_retries=4, time_limit=60, soft_time_limit=45, priority=8)
+@shared_task(name='atol_create_receipt', bind=True, max_retries=4, time_limit=60, soft_time_limit=45)
 def atol_create_receipt(self, receipt_id):
     """
     Change receipt status and the change date accordingly
@@ -64,7 +64,7 @@ def atol_create_receipt(self, receipt_id):
             )
 
 
-@shared_task(name='atol_receive_receipt_report', bind=True, max_retries=4, time_limit=60, soft_time_limit=45, priority=8)
+@shared_task(name='atol_receive_receipt_report', bind=True, max_retries=4, time_limit=60, soft_time_limit=45)
 def atol_receive_receipt_report(self, receipt_id):
     """
     Attempt to retrieve a receipt report for given receipt_id
@@ -114,7 +114,7 @@ def atol_retry_created_receipts():
     Receipt = apps.get_model('atol', 'Receipt')
     now = timezone.now()
 
-    created_receipts = (Receipt.objects.using('slave')
+    created_receipts = (Receipt.objects
                         .filter(status=ReceiptStatus.created,
                                 created_at__range=(now - timedelta(days=1), now)))
 
@@ -133,7 +133,7 @@ def atol_retry_initiated_receipts():
     Receipt = apps.get_model('atol', 'Receipt')
     now = timezone.now()
 
-    initiated_receipts = (Receipt.objects.using('slave')
+    initiated_receipts = (Receipt.objects
                           .filter(status=ReceiptStatus.initiated,
                                   initiated_at__range=(now - timedelta(days=1), now)))
 

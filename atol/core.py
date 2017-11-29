@@ -8,7 +8,7 @@ from django.core.cache import cache
 
 from atol import exceptions
 
-logger = logging.getLogger('atol')
+logger = logging.getLogger(__name__)
 
 NewReceipt = namedtuple('NewReceipt', ['uuid', 'data'])
 ReceiptReport = namedtuple('ReceiptReport', ['uuid', 'data'])

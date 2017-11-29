@@ -2,9 +2,10 @@ import pytest
 from django.test import override_settings
 from atol.models import Receipt, ReceiptStatus
 
+pytestmark = pytest.mark.django_db(transaction=True)
 
-@pytest.mark.django_db(transaction=True)
-def test_receipt_302_normal_redirect(web_client):
+
+def test_receipt_302_normal_redirect(client):
     data = {
         'callback_url': '',
         'daemon_code': 'prod-agent-3',
@@ -28,26 +29,24 @@ def test_receipt_302_normal_redirect(web_client):
     }
     receipt = Receipt.objects.create(content=data, status=ReceiptStatus.received)
 
-    resp = web_client.get(receipt.ofd_link)
+    resp = client.get(receipt.ofd_link)
     assert resp.status_code == 302
     assert resp['Location'].startswith('https://lk.platformaofd')
     assert receipt.content['payload']['fn_number'] in resp['Location']
 
     with override_settings(RECEIPTS_OFD_URL_TEMPLATE=u'fake?t={t}&s={s}&fn={fn}&i={fd}&fp={fp}&n={n}'):
-        resp = web_client.get(receipt.ofd_link)
+        resp = client.get(receipt.ofd_link)
         assert resp.status_code == 302
         assert '20170726T103200' in resp['Location']
 
 
-@pytest.mark.django_db(transaction=True)
-def test_receipt_404_missing_receipt(web_client):
+def test_receipt_404_missing_receipt(client):
     receipt = Receipt.objects.create(content=['Dummy'])
-    response = web_client.get(receipt.ofd_link, expect_errors=True)
+    response = client.get(receipt.ofd_link, expect_errors=True)
     assert response.status_code == 404
 
 
-@pytest.mark.django_db(transaction=True)
-def test_receipt_404_malformed_receipt(web_client):
+def test_receipt_404_malformed_receipt(client):
     receipt = Receipt.objects.create(content={'a': 'b'})
-    response = web_client.get(receipt.ofd_link, expect_errors=True)
+    response = client.get(receipt.ofd_link, expect_errors=True)
     assert response.status_code == 404

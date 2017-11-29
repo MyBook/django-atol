@@ -1,29 +1,18 @@
 import logging
-import datetime
 import shortuuid
-from dateutil.parser import parse as parse_date
 
 from django.conf import settings
 from django.http import HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.views.generic import RedirectView
+from django.utils.translation import ugettext_lazy as _
 
 from atol.models import Receipt
+from atol.exceptions import MissingReceipt
+from atol.utils import parse_receipt_datetime
 
 logger = logging.getLogger(__name__)
-
-
-class MissingReceipt(Exception):
-    pass
-
-
-def parse_receipt_datetime(date_str):
-    try:
-        return datetime.datetime.strptime(date_str, '%d.%m.%Y %H:%M:%S')
-    except Exception:
-        logger.warning('unexpected date format in receipt, %s', date_str)
-        return parse_date(date_str)
 
 
 class ReceiptView(RedirectView):
@@ -41,10 +30,10 @@ class ReceiptView(RedirectView):
         try:
             return super(ReceiptView, self).get(request, *args, **kwargs)
         except MissingReceipt:
-            return HttpResponseNotFound(content=force_bytes('Чек не найден'))
+            return HttpResponseNotFound(content=force_bytes(_('Чек не найден')))
         except (KeyError, TypeError, ValueError) as exc:
             logger.error('invalid receipt format: %s', exc, exc_info=True)
-            return HttpResponseNotFound(content=force_bytes('Чек не найден'))  # do not face 500 to user
+            return HttpResponseNotFound(content=force_bytes(_('Чек не найден')))  # do not face 500 to user
 
     def get_redirect_url(self, *args, **kwargs):
         uuid = shortuuid.decode(kwargs['short_uuid'])

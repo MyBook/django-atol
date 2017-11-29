@@ -13,8 +13,9 @@ from atol.tasks import (atol_create_receipt, atol_receive_receipt_report,
                         atol_retry_created_receipts, atol_retry_initiated_receipts)
 from tests import ATOL_BASE_URL
 
+pytestmark = pytest.mark.django_db(transaction=True)
 
-@pytest.mark.django_db(transaction=True)
+
 @responses.activate
 def test_atol_create_failing_receipt_progressive_countdown():
     responses.add(responses.POST, ATOL_BASE_URL + '/getToken', status=200,
@@ -32,7 +33,6 @@ def test_atol_create_failing_receipt_progressive_countdown():
     assert receipt.status == 'failed'
 
 
-@pytest.mark.django_db(transaction=True)
 @responses.activate
 def test_atol_create_receipt_stopped_on_unrecoverable_error():
     responses.add(responses.POST, ATOL_BASE_URL + '/getToken',
@@ -50,7 +50,6 @@ def test_atol_create_receipt_stopped_on_unrecoverable_error():
     assert receipt.status == 'failed'
 
 
-@pytest.mark.django_db(transaction=True)
 @responses.activate
 def test_atol_create_receipt_check_receipt_status():
     receipt = Receipt.objects.create(status='failed')
@@ -60,7 +59,6 @@ def test_atol_create_receipt_check_receipt_status():
         assert len(sell_mock.mock_calls) == 0
 
 
-@pytest.mark.django_db(transaction=True)
 @responses.activate
 def test_atol_failing_receive_report_progressive_countdown():
     uuid = str(uuid4())
@@ -80,7 +78,6 @@ def test_atol_failing_receive_report_progressive_countdown():
     assert receipt.status == 'failed'
 
 
-@pytest.mark.django_db(transaction=True)
 @responses.activate
 def test_atol_fetch_receipt_report_stopped_on_unrecoverable_error():
     uuid = str(uuid4())
@@ -99,7 +96,6 @@ def test_atol_fetch_receipt_report_stopped_on_unrecoverable_error():
     assert receipt.status == 'failed'
 
 
-@pytest.mark.django_db(transaction=True)
 @responses.activate
 def test_atol_fetch_receipt_report_check_receipt_status():
     receipt = Receipt.objects.create()
@@ -109,7 +105,6 @@ def test_atol_fetch_receipt_report_check_receipt_status():
         assert len(report_mock.mock_calls) == 0
 
 
-@pytest.mark.django_db(transaction=True)
 def test_retry_created_receipt_payments():
     now = timezone.now()
 
@@ -129,7 +124,6 @@ def test_retry_created_receipt_payments():
         assert {call[0][0] for call in task_mock.call_args_list} == {receipt1.id, receipt2.id}
 
 
-@pytest.mark.django_db(transaction=True)
 def test_retry_initiated_receipt_payments():
     now = timezone.now()
 
