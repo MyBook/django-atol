@@ -16,7 +16,7 @@ from tests import ATOL_BASE_URL
 
 @pytest.mark.django_db(transaction=True)
 @responses.activate
-def test_atol_create_failing_receipt_progressive_countdown(celery_worker):
+def test_atol_create_failing_receipt_progressive_countdown():
     responses.add(responses.POST, ATOL_BASE_URL + '/getToken', status=200,
                   json={'code': 0, 'token': 'foobar'})
     responses.add(responses.POST, ATOL_BASE_URL + '/ATOL-ProdTest-1/sell', status=500)
@@ -34,7 +34,7 @@ def test_atol_create_failing_receipt_progressive_countdown(celery_worker):
 
 @pytest.mark.django_db(transaction=True)
 @responses.activate
-def test_atol_create_receipt_stopped_on_unrecoverable_error(celery_worker):
+def test_atol_create_receipt_stopped_on_unrecoverable_error():
     responses.add(responses.POST, ATOL_BASE_URL + '/getToken',
                   status=200, json={'code': 0, 'token': 'foobar'})
     responses.add(responses.POST, ATOL_BASE_URL + '/ATOL-ProdTest-1/sell',
@@ -52,7 +52,7 @@ def test_atol_create_receipt_stopped_on_unrecoverable_error(celery_worker):
 
 @pytest.mark.django_db(transaction=True)
 @responses.activate
-def test_atol_create_receipt_check_receipt_status(celery_worker):
+def test_atol_create_receipt_check_receipt_status():
     receipt = Receipt.objects.create(status='failed')
 
     with mock.patch.object(AtolAPI, 'sell', wraps=AtolAPI.sell) as sell_mock:
@@ -62,7 +62,7 @@ def test_atol_create_receipt_check_receipt_status(celery_worker):
 
 @pytest.mark.django_db(transaction=True)
 @responses.activate
-def test_atol_failing_receive_report_progressive_countdown(celery_worker):
+def test_atol_failing_receive_report_progressive_countdown():
     uuid = str(uuid4())
     receipt = Receipt.objects.create(status='initiated', uuid=uuid)
 
@@ -82,7 +82,7 @@ def test_atol_failing_receive_report_progressive_countdown(celery_worker):
 
 @pytest.mark.django_db(transaction=True)
 @responses.activate
-def test_atol_fetch_receipt_report_stopped_on_unrecoverable_error(celery_worker):
+def test_atol_fetch_receipt_report_stopped_on_unrecoverable_error():
     uuid = str(uuid4())
     receipt = Receipt.objects.create(status='initiated', uuid=uuid)
 
@@ -101,7 +101,7 @@ def test_atol_fetch_receipt_report_stopped_on_unrecoverable_error(celery_worker)
 
 @pytest.mark.django_db(transaction=True)
 @responses.activate
-def test_atol_fetch_receipt_report_check_receipt_status(celery_worker):
+def test_atol_fetch_receipt_report_check_receipt_status():
     receipt = Receipt.objects.create()
 
     with mock.patch.object(AtolAPI, 'report', wraps=AtolAPI.sell) as report_mock:
@@ -110,7 +110,7 @@ def test_atol_fetch_receipt_report_check_receipt_status(celery_worker):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_retry_created_receipt_payments(celery_worker):
+def test_retry_created_receipt_payments():
     now = timezone.now()
 
     with freeze_time(now - datetime.timedelta(hours=3)):
@@ -130,7 +130,7 @@ def test_retry_created_receipt_payments(celery_worker):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_retry_initiated_receipt_payments(celery_worker):
+def test_retry_initiated_receipt_payments():
     now = timezone.now()
 
     receipt1 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=1))

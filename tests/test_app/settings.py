@@ -31,7 +31,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'tests.urls'
+ROOT_URLCONF = 'tests.test_app.urls'
 
 TEMPLATES = [
     {
@@ -48,8 +48,6 @@ TEMPLATES = [
         },
     },
 ]
-
-# WSGI_APPLICATION = 'testproject.wsgi.application'
 
 
 # Database
@@ -112,6 +110,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+CELERY_ALWAYS_EAGER = True
+CELERY_IGNORE_RESULT = True
 
 RECEIPTS_ATOL_LOGIN = 'login'
 RECEIPTS_ATOL_PASSWORD = 'secret'
