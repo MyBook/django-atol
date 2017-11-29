@@ -2,7 +2,10 @@
 ATOL
 ====
 
-Description
+Application for connecting online cashbox ATOL
+Only 1 purchase is supported in receipt (1 product)
+
+
 
 Quick start
 -----------
@@ -33,9 +36,21 @@ Quick start
 
 4. Run ``python manage.py migrate atol`` to create the receipt model.
 
-5. Add ``payment_accept`` signal and ``init_receipt`` receiver::
+5. Add the mechanics of calling a receipt creation after a successful payment. For example, this can be done through a signal that will be called upon successful payment::
+
+    # <your_app>/signals.py
 
     payment_accepted = Signal(providing_args=['payment'])
+
+    # <your_app>/providers/googleplay.py
+
+    def process_payment(payment)
+
+        ...
+
+        payment_accepted.send(sender='google-play', payment=payment)
+
+    # <your_app>/receivers.py
 
     @receiver(payment_accepted)
     @transaction.atomic

@@ -117,22 +117,21 @@ class AtolAPI(object):
             logger.warning('request %s %s with headers=%s, params=%s json=%s failed with status code %s: %s',
                            method, url, headers, params, json, response.status_code, json_response,
                            extra={'data': {'json_request': json,
-                                           'response': response.content[:1000],
+                                           'content': response.content,
                                            'json_response': json_response}})
             raise exceptions.AtolRequestException()
 
         # 401 should be handled separately by the calling code
         if response.status_code == 401:
-            logger.info('authentication failed for request %s %s with headers=%s, params=%s json=%s: %s',
-                        method, url, headers, params, json, response.content[:1000])
+            logger.info('authentication failed for request %s %s with headers=%s, params=%s json=%s',
+                        method, url, headers, params, json, extra={'data': {'content': response.content}})
             raise exceptions.AtolAuthTokenException()
 
         try:
             response_data = response.json()
         except Exception as exc:
-            logger.warning('unable to parse json response %s due to %s',
-                           response.content[:1000], exc,
-                           exc_info=True, extra={'data': {'content': response.content}})
+            logger.warning('unable to parse json response due to %s', exc, exc_info=True,
+                           extra={'data': {'content': response.content}})
             raise exceptions.AtolRequestException()
 
         if response_data.get('error'):
