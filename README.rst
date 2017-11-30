@@ -28,15 +28,29 @@ Quick start
     RECEIPTS_ATOL_PAYMENT_ADDRESS = 'г. Москва, ул. Оранжевая, д.22 к.11'
     RECEIPTS_OFD_URL_TEMPLATE = u'https://lk.platformaofd.ru/web/noauth/cheque?fn={fn}&fp={fp}'
 
-3. Include the ``atol`` URLconf in your project urls.py like this::
+3. Add celery-beat tasks to CELERYBEAT_SCHEDULE settings like this::
+
+    CELERYBEAT_SCHEDULE = {
+        ...
+        'atol_retry_created_receipts': {
+            'task': 'atol_retry_created_receipts',
+            'schedule': crontab(minute=25)
+        },
+        'atol_retry_initiated_receipts': {
+            'task': 'atol_retry_initiated_receipts',
+            'schedule': crontab(minute=35)
+        }
+    }
+
+4. Include the ``atol`` URLconf in your project urls.py like this::
 
     from atol.views import ReceiptView
 
     url(r'^r/(?P<short_uuid>[\w]+)/$', ReceiptView.as_view(), name='receipt')
 
-4. Run ``python manage.py migrate atol`` to create the receipt model.
+5. Run ``python manage.py migrate atol`` to create the receipt model.
 
-5. Add the mechanics of calling a receipt creation after a successful payment. For example, this can be done through a signal that will be called upon successful payment::
+6. Add the mechanics of calling a receipt creation after a successful payment. For example, this can be done through a signal that will be called upon successful payment::
 
     # <your_app>/signals.py
 
