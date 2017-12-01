@@ -1,6 +1,6 @@
 Changelog
 ---------
 
-1.0.0 (2017-11-28)
+1.0.0 (2017-12-01)
 ------------------
-* Add base API and tests
+* Initial release
