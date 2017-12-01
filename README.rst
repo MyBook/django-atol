@@ -2,10 +2,12 @@
 ATOL
 ====
 
-Application for connecting online cashbox ATOL
-Only 1 purchase is supported in receipt (1 product)
+Application for integrating Django and  https://online.atol.ru/
 
-
+Important limitations:
+    * Python 3.5+ 
+    * PostgreSQL ≥ 9.4 (JSONB field)
+    * only 1 purchase is supported in receipt (1 product)
 
 Quick start
 -----------
