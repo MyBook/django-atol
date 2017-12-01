@@ -4,6 +4,13 @@ ATOL
 
 Application for integrating Django and  https://online.atol.ru/
 
+.. image:: https://img.shields.io/badge/python-3.5,%203.6-blue.svg
+    :target: https://pypi.python.org/pypi/django-atol/
+.. image:: https://travis-ci.org/MyBook/django-atol.svg?branch=master
+    :target: https://travis-ci.org/MyBook/django-atol
+.. image:: https://codecov.io/gh/MyBook/django-atol/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/MyBook/django-atol
+
 Important limitations:
 
     * Python 3.5+ 
