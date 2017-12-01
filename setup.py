@@ -2,6 +2,8 @@
 import os
 import re
 
+import sys
+
 try:
     from setuptools import setup
 except ImportError:
@@ -44,6 +46,9 @@ test_requirements = [
     'flake8>=3.5.0',
 ]
 
+needs_pytest = {'pytest', 'test'}.intersection(sys.argv)
+setup_requires = ['pytest_runner'] if needs_pytest else []
+
 setup(
     name='django-atol',
     version=get_version('atol'),
@@ -59,7 +64,7 @@ setup(
     package_dir={'atol': 'atol'},
     include_package_data=True,
     install_requires=requirements,
-    setup_requires=['pytest-runner>=2.0,<3dev'],
+    setup_requires=setup_requires,
     license='BSD',
     zip_safe=False,
     keywords='atol',

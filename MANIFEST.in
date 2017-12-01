@@ -1,0 +1,7 @@
+include *.rst
+recursive-include atol
+recursive-include tests *.py
+include tox.ini
+
+# Don't package GitHub-specific files.
+exclude *.md .travis.yml
