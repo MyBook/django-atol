@@ -45,3 +45,15 @@ class AtolRecoverableError(AtolException):
     """Raised when atol responds with an error
        that is normally recoverable and can be retried with an extra request"""
     pass
+
+
+class AtolReceiptNotProcessed(AtolException):
+    """Raised when atol responds with an error
+        that is requires a repeated request to register a check
+
+        Call if:
+        1. The number of KKT in the group does not correspond to the speed of receipt of checks.
+            It is necessary to connect additional KKT or reduce the speed of receipt of checks.
+        2. All cash desks of the group are off or inactive. Please contact your administrator.
+    """
+    pass

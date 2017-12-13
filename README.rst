@@ -60,7 +60,13 @@ Quick start
 
 5. Run ``python manage.py migrate atol`` to create the receipt model.
 
-6. Add the mechanics of calling a receipt creation after a successful payment. For example, this can be done through a signal that will be called upon successful payment::
+6. Add receipt field to your payment model::
+
+    from atol.models import Receipt
+
+    receipt = models.OneToOneField(Receipt, verbose_name=_('Чек'), blank=True, null=True, on_delete=models.SET_NULL)
+
+7. Add the mechanics of calling a receipt creation after a successful payment. For example, this can be done through a signal that will be called upon successful payment::
 
     # <your_app>/signals.py
 

@@ -1,5 +1,6 @@
 import math
 import logging
+from uuid import uuid4
 from datetime import timedelta
 
 from django.db import transaction
@@ -10,7 +11,7 @@ from celery import shared_task
 
 from atol.core import AtolAPI
 from atol.models import ReceiptStatus
-from atol.exceptions import AtolUnrecoverableError, NoEmailError
+from atol.exceptions import AtolUnrecoverableError, NoEmailError, AtolReceiptNotProcessed
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,6 @@ def atol_create_receipt(self, receipt_id):
         logger.error('unable to init receipt %s with params %s due to %s', receipt.id, params, exc,
                      exc_info=True, extra={'data': {'payment_params': params}})
         receipt.declare_failed()
-        return
     except Exception as exc:
         logger.warning('failed to init receipt %s with params %s due to %s', receipt.id, params, exc,
                        exc_info=True, extra={'data': {'payment_params': params}})
@@ -86,12 +86,22 @@ def atol_receive_receipt_report(self, receipt_id):
         report = atol.report(receipt.uuid)
     except AtolUnrecoverableError as exc:
         logger.error('unable to fetch report for receipt %s due to %s',
-                     receipt.uuid, exc, exc_info=True)
+                     receipt.id, exc, exc_info=True)
         receipt.declare_failed()
-        return
+    except AtolReceiptNotProcessed as exc:
+        logger.warning('unable to fetch report for receipt %s due to %s',
+                       receipt.id, exc, exc_info=True)
+        logger.info('repeat receipt registration: id %s; old internal_uuid %s',
+                    receipt.id, receipt.internal_uuid)
+        with transaction.atomic():
+            receipt.internal_uuid = uuid4()
+            receipt.save(update_fields=['internal_uuid'])
+            transaction.on_commit(
+                lambda: atol_create_receipt.apply_async(args=(receipt.id,), countdown=60)
+            )
     except Exception as exc:
         logger.warning('failed to fetch report for receipt %s due to %s',
-                       receipt_id, exc, exc_info=True)
+                       receipt.id, exc, exc_info=True)
         try:
             countdown = 60 * int(math.exp(self.request.retries))
             logger.info('retrying to receive receipt %s with countdown %s due to %s',

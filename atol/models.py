@@ -33,6 +33,8 @@ class Receipt(models.Model):
 
     created_at = models.DateTimeField(_('Дата создания чека'), auto_now_add=True, editable=False)
     initiated_at = models.DateTimeField(_('Дата инициализации чека в системе оператора'), blank=True, null=True)
+    retried_at = models.DateTimeField(_('Дата повторной инициализации чека в системе оператора'),
+                                      blank=True, null=True)
     received_at = models.DateTimeField(_('Дата получения чека от оператора'), blank=True, null=True)
     failed_at = models.DateTimeField(_('Дата ошибки'), blank=True, null=True)
 
@@ -69,8 +71,17 @@ class Receipt(models.Model):
         for k, v in kwargs.items():
             setattr(self, k, v)
         self.status = ReceiptStatus.initiated
-        self.initiated_at = timezone.now()
-        self.save(update_fields=list(kwargs.keys()) + ['status', 'initiated_at'])
+        update_fields = list(kwargs.keys()) + ['status']
+
+        now = timezone.now()
+        if self.initiated_at:
+            self.retried_at = now
+            update_fields += ['retried_at']
+        else:
+            self.initiated_at = now
+            update_fields += ['initiated_at']
+
+        self.save(update_fields=update_fields)
         receipt_initiated.send(sender=None, receipt=self)
 
     def receive(self, **kwargs):
