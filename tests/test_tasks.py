@@ -66,13 +66,19 @@ def test_atol_create_receipt_stopped_on_unrecoverable_error():
     assert receipt.status == 'failed'
 
 
-@responses.activate
-def test_atol_create_receipt_check_receipt_status():
-    receipt = Receipt.objects.create(status='failed', purchase_price=299)
+@pytest.mark.parametrize(['receipt_data', 'status'], [
+    ({'status': 'failed', 'purchase_price': 299, 'user_email': 'foo@bar.com'}, ReceiptStatus.failed),
+    ({'purchase_price': 299}, ReceiptStatus.no_email_phone),
+])
+def test_atol_create_receipt_fail(receipt_data, status):
+    receipt = Receipt.objects.create(**receipt_data)
 
     with mock.patch.object(AtolAPI, 'sell') as sell_mock:
         atol_create_receipt(receipt.id)
         assert len(sell_mock.mock_calls) == 0
+
+    receipt.refresh_from_db()
+    assert receipt.status == status
 
 
 @responses.activate

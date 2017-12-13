@@ -11,7 +11,7 @@ from celery import shared_task
 
 from atol.core import AtolAPI
 from atol.models import ReceiptStatus
-from atol.exceptions import AtolUnrecoverableError, NoEmailError, AtolReceiptNotProcessed
+from atol.exceptions import AtolUnrecoverableError, NoEmailAndPhoneError, AtolReceiptNotProcessed
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def atol_create_receipt(self, receipt_id):
 
     try:
         params = receipt.get_params()
-    except NoEmailError:
+    except NoEmailAndPhoneError:
         # this email should have been sent, but we got neither email
         logger.warning('unable to init receipt %s due to missing email/phone', receipt.id)
         receipt.declare_failed(status=ReceiptStatus.no_email_phone)

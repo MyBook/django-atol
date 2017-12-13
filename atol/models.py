@@ -15,6 +15,7 @@ except ImportError:
 from model_utils import Choices
 
 from atol.signals import receipt_failed, receipt_initiated, receipt_received
+from atol.exceptions import NoEmailAndPhoneError
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +103,9 @@ class Receipt(models.Model):
         }
         if self.user_email:
             params['user_email'] = self.user_email
-        if self.user_phone:
+        elif self.user_phone:
             params['user_phone'] = self.user_phone  # don't strip leading plus nor non-russian country code
+        else:
+            raise NoEmailAndPhoneError
+
         return params

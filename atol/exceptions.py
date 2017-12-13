@@ -1,4 +1,4 @@
-class NoEmailError(Exception):
+class NoEmailAndPhoneError(Exception):
     pass
 
 
