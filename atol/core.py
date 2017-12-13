@@ -237,8 +237,8 @@ class AtolAPI(object):
             if exc.error_data['code'] == 1:
                 logger.info('report request for receipt %s was not processed: %s; '
                             'Must repeat the request with a new unique value <external_id>',
-                            receipt_uuid, exc.response_data['text'])
-                raise exceptions.AtolReceiptNotProcessed(exc.response_data['text'])
+                            receipt_uuid, exc.response_data.get('text'))
+                raise exceptions.AtolReceiptNotProcessed(exc.response_data.get('text'))
             # the rest of the errors are not recoverable
             raise exceptions.AtolUnrecoverableError()
         except Exception as exc:

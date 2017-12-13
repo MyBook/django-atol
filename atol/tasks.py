@@ -34,7 +34,7 @@ def atol_create_receipt(self, receipt_id):
         receipt.declare_failed(status=ReceiptStatus.no_email_phone)
         return
 
-    if receipt.status != ReceiptStatus.created:
+    if receipt.status not in [ReceiptStatus.created, ReceiptStatus.retried]:
         logger.error('receipt %s has invalid status: %s', receipt.uuid, receipt.status)
         return
 
@@ -95,7 +95,8 @@ def atol_receive_receipt_report(self, receipt_id):
                     receipt.id, receipt.internal_uuid)
         with transaction.atomic():
             receipt.internal_uuid = uuid4()
-            receipt.save(update_fields=['internal_uuid'])
+            receipt.status = ReceiptStatus.retried
+            receipt.save(update_fields=['internal_uuid', 'status'])
             transaction.on_commit(
                 lambda: atol_create_receipt.apply_async(args=(receipt.id,), countdown=60)
             )

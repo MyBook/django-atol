@@ -17,4 +17,9 @@ class Migration(migrations.Migration):
             name='retried_at',
             field=models.DateTimeField(blank=True, null=True, verbose_name='Дата повторной инициализации чека в системе оператора'),
         ),
+        migrations.AlterField(
+            model_name='receipt',
+            name='status',
+            field=models.CharField(choices=[('created', 'Ожидает инициации в системе оператора'), ('initiated', 'Иницирован в системе оператора'), ('retried', 'Повторно иницирован в системе оператора'), ('received', 'Получен от оператора'), ('no_email_phone', 'Отсутствует email/phone'), ('failed', 'Ошибка')], default='created', max_length=16, verbose_name='Статус чека'),
+        ),
     ]

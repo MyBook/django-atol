@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 ReceiptStatus = Choices(
     ('created', _('Ожидает инициации в системе оператора')),
     ('initiated', _('Иницирован в системе оператора')),
+    ('retried', _('Повторно иницирован в системе оператора')),
     ('received', _('Получен от оператора')),
     ('no_email_phone', _('Отсутствует email/phone')),
     ('failed', _('Ошибка')),
@@ -70,16 +71,16 @@ class Receipt(models.Model):
     def initiate(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
-        self.status = ReceiptStatus.initiated
-        update_fields = list(kwargs.keys()) + ['status']
+        update_fields = list(kwargs.keys())
 
         now = timezone.now()
-        if self.initiated_at:
+        if self.status == ReceiptStatus.retried:
             self.retried_at = now
             update_fields += ['retried_at']
         else:
             self.initiated_at = now
-            update_fields += ['initiated_at']
+            self.status = ReceiptStatus.initiated
+            update_fields += ['initiated_at', 'status']
 
         self.save(update_fields=update_fields)
         receipt_initiated.send(sender=None, receipt=self)
