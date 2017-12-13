@@ -1,5 +1,6 @@
 from uuid import uuid4
 from freezegun import freeze_time
+from collections import namedtuple
 import responses
 import datetime
 import mock
@@ -7,13 +8,33 @@ import pytest
 
 from django.utils import timezone
 
-from atol.core import AtolAPI
-from atol.models import Receipt
+from atol.core import AtolAPI, NewReceipt
+from atol.models import Receipt, ReceiptStatus
 from atol.tasks import (atol_create_receipt, atol_receive_receipt_report,
                         atol_retry_created_receipts, atol_retry_initiated_receipts)
 from tests import ATOL_BASE_URL
 
 pytestmark = pytest.mark.django_db(transaction=True)
+
+
+@responses.activate
+def test_created_receipt_ok():
+    now = timezone.now()
+    responses.add(responses.POST, ATOL_BASE_URL + '/getToken', status=200,
+                  json={'code': 0, 'token': 'foobar'})
+
+    receipt = Receipt.objects.create(user_email='foo@bar.com', purchase_price=707.1)
+
+    with mock.patch.object(AtolAPI, 'sell', wraps=AtolAPI.sell) as sell_mock:
+        with mock.patch.object(atol_receive_receipt_report, 'apply_async') as task_mock:
+            sell_mock.return_value = NewReceipt(uuid='5869a6d9-1540-4ebb-a2a2-f1d11501f213', data=None)
+            atol_create_receipt(receipt.id)
+            assert len(task_mock.mock_calls) == 1
+
+    receipt.refresh_from_db()
+    assert receipt.uuid == '5869a6d9-1540-4ebb-a2a2-f1d11501f213'
+    assert receipt.status == ReceiptStatus.initiated
+    assert receipt.initiated_at > now
 
 
 @responses.activate
@@ -102,6 +123,7 @@ def test_atol_fetch_receipt_report_check_receipt_status():
 @responses.activate
 def test_retry_created_receipt_for_not_processed_receipt():
     uuid = str(uuid4())
+    now = timezone.now()
     receipt = Receipt.objects.create(status='initiated', uuid=uuid, purchase_price=1234.5,
                                      user_email='foo@bar.com')
 
@@ -110,9 +132,17 @@ def test_retry_created_receipt_for_not_processed_receipt():
     responses.add(responses.GET, ATOL_BASE_URL + '/ATOL-ProdTest-1/report/%s' % uuid,
                   status=400, json={'error': {'code': 1}})
 
-    with mock.patch.object(atol_create_receipt, 'apply_async') as task_mock:
-        atol_receive_receipt_report(receipt.id)
-        assert len(task_mock.mock_calls) == 1
+    with mock.patch.object(AtolAPI, 'sell', wraps=AtolAPI.sell) as sell_mock:
+        sell_mock.return_value = NewReceipt(uuid='42ee0a7a-2b30-42f1-951f-1c131e2ab322', data=None)
+
+        with mock.patch.object(atol_receive_receipt_report, 'apply_async'):
+            atol_receive_receipt_report(receipt.id)
+        assert len(sell_mock.mock_calls) == 1
+
+    receipt.refresh_from_db()
+    assert receipt.uuid == '42ee0a7a-2b30-42f1-951f-1c131e2ab322'
+    assert receipt.status == ReceiptStatus.retried
+    assert receipt.retried_at > now
 
 
 def test_retry_created_receipt_payments():
