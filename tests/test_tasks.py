@@ -1,6 +1,5 @@
 from uuid import uuid4
 from freezegun import freeze_time
-from collections import namedtuple
 import responses
 import datetime
 import mock
