@@ -130,7 +130,7 @@ def test_retry_created_receipt_for_not_processed_receipt():
     uuid = str(uuid4())
     now = timezone.now()
     receipt = Receipt.objects.create(status='initiated', uuid=uuid, purchase_price=1234.5,
-                                     user_email='foo@bar.com')
+                                     user_phone='+79991234567')
 
     responses.add(responses.POST, ATOL_BASE_URL + '/getToken',
                   status=200, json={'code': 0, 'token': 'foobar'})
