@@ -2,8 +2,6 @@
 import os
 import re
 
-import sys
-
 try:
     from setuptools import setup
 except ImportError:
@@ -28,26 +26,11 @@ with open('CHANGELOG.rst') as history_file:
 
 requirements = [
     'requests>=2.10.0',
-    'Django>=1.10.5',
     'python-dateutil>=2.5.3',
     'django-model-utils>=3.0.0',
     'celery>=3.1.25',
     'shortuuid>=0.5.0',
 ]
-
-test_requirements = [
-    'pytest>=3.0.7',
-    'pytest-cov>=2.5.1',
-    'pytest-django>=3.1.2',
-    'freezegun>=0.3.9',
-    'responses>=0.8.1',
-    'mock>=2.0.0',
-    'psycopg2>=2.7.1',
-    'flake8>=3.5.0',
-]
-
-needs_pytest = {'pytest', 'test'}.intersection(sys.argv)
-setup_requires = ['pytest_runner'] if needs_pytest else []
 
 setup(
     name='django-atol',
@@ -64,7 +47,6 @@ setup(
     package_dir={'atol': 'atol'},
     include_package_data=True,
     install_requires=requirements,
-    setup_requires=setup_requires,
     license='BSD',
     zip_safe=False,
     keywords='atol',
@@ -78,5 +60,4 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
-    tests_require=test_requirements,
 )

@@ -1,13 +1,17 @@
 import logging
-import shortuuid
 from uuid import uuid4
 
+import shortuuid
 from django.contrib.postgres.fields import JSONField
-from django.core.urlresolvers import reverse
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
+
+try:
+    from django.urls import reverse
+except ImportError:
+    from django.core.urlresolvers import reverse
 from model_utils import Choices
 
 from atol.signals import receipt_failed, receipt_initiated, receipt_received
