@@ -40,13 +40,12 @@ def test_receipt_302_normal_redirect(client):
         assert '20170726T103200' in resp['Location']
 
 
-def test_receipt_404_missing_receipt(client):
-    receipt = Receipt.objects.create(content=['Dummy'])
-    response = client.get(receipt.ofd_link, expect_errors=True)
-    assert response.status_code == 404
-
-
-def test_receipt_404_malformed_receipt(client):
-    receipt = Receipt.objects.create(content={'a': 'b'})
+@pytest.mark.parametrize('content', [
+    ['Dummy'],
+    {'a': 'b'},
+    None,
+])
+def test_receipt_404(content, client):
+    receipt = Receipt.objects.create(content=content)
     response = client.get(receipt.ofd_link, expect_errors=True)
     assert response.status_code == 404

@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+1.2.0 (2017-12-14)
+------------------
+* Support retried not processed receipt
+
 1.1.0 (2017-12-13)
 ------------------
 * Django 2.0 support

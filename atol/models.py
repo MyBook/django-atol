@@ -15,6 +15,7 @@ except ImportError:
 from model_utils import Choices
 
 from atol.signals import receipt_failed, receipt_initiated, receipt_received
+from atol.exceptions import NoEmailAndPhoneError
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 ReceiptStatus = Choices(
     ('created', _('Ожидает инициации в системе оператора')),
     ('initiated', _('Иницирован в системе оператора')),
+    ('retried', _('Повторно иницирован в системе оператора')),
     ('received', _('Получен от оператора')),
     ('no_email_phone', _('Отсутствует email/phone')),
     ('failed', _('Ошибка')),
@@ -33,6 +35,8 @@ class Receipt(models.Model):
 
     created_at = models.DateTimeField(_('Дата создания чека'), auto_now_add=True, editable=False)
     initiated_at = models.DateTimeField(_('Дата инициализации чека в системе оператора'), blank=True, null=True)
+    retried_at = models.DateTimeField(_('Дата повторной инициализации чека в системе оператора'),
+                                      blank=True, null=True)
     received_at = models.DateTimeField(_('Дата получения чека от оператора'), blank=True, null=True)
     failed_at = models.DateTimeField(_('Дата ошибки'), blank=True, null=True)
 
@@ -68,9 +72,18 @@ class Receipt(models.Model):
     def initiate(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
-        self.status = ReceiptStatus.initiated
-        self.initiated_at = timezone.now()
-        self.save(update_fields=list(kwargs.keys()) + ['status', 'initiated_at'])
+        update_fields = list(kwargs.keys())
+
+        now = timezone.now()
+        if self.status == ReceiptStatus.retried:
+            self.retried_at = now
+            update_fields += ['retried_at']
+        else:
+            self.initiated_at = now
+            self.status = ReceiptStatus.initiated
+            update_fields += ['initiated_at', 'status']
+
+        self.save(update_fields=update_fields)
         receipt_initiated.send(sender=None, receipt=self)
 
     def receive(self, **kwargs):
@@ -90,6 +103,9 @@ class Receipt(models.Model):
         }
         if self.user_email:
             params['user_email'] = self.user_email
-        if self.user_phone:
+        elif self.user_phone:
             params['user_phone'] = self.user_phone  # don't strip leading plus nor non-russian country code
+        else:
+            raise NoEmailAndPhoneError
+
         return params
