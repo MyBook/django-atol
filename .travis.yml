@@ -14,3 +14,11 @@ after_success:
 
 notifications:
   email: false
+deploy:
+  - provider: pypi
+    user: mybook
+    distributions: sdist bdist_wheel
+    password:
+      secure: jiMI/Rzyi/rb0VG7dYy7Lnt/99Yp2RecM0LT2SwMm8oZFpOoM1HDAOLjt2r6+IW1VnmJCdI3UFvU7MgPwYxg6DN++cj1Ag5IYqnmQAZL2cKWy1L7mGJ5/CkvHsr00OHmZhPCzPIavqv7OxIxAt5tqohCBYbJkJJh/1s26wqlDIBiMO9gQZZUjTALUGMLq0bRf44QC9KRWJkEg4uoRCUFzpAF5A2M5TBTEjOLID+DLHKdXT1YVSrD0wWbIxzYE3tg7L+fJhvUOTxHjsz+KoE7//LaqxXoQ6QjQH3Bwv2mm71VXhA906y9Pfkf27fpfpzHiSYgRZ1tnga4Ktbi9eEe0y+u5c8GbJxtyilFiulhWIPgrMrDcZxXCDvyKObZ5t9sRoNSFON2gXru8Qq0NuxGm65WFVB9aat7BNMNW115pyAAvL7sJmR+R+Vyf1sRBKgxgVkuiLaUu2MD+9wQCMsDVRVNrXYpXYMs1oJTr2eBOFP6z2LOvVwPclO/OTWV8HUdt8T6wKgqvfaLrwS+HYzmZ3vzGlklIKfiqt2LcZ5VNKRwNyplnJYP7enKtgOIfKdlSignko6KOY09U9naxOS0G0mFguqQBJl9UP2DbTGGfPF4TPrLh4702n4H5fw9gexIsPubmm8YhHGcQQ8cFFHDaMXyKcxLOUb4xxhQeXI3jBY=
+    on:
+      tags: true
