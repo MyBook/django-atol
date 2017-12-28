@@ -10,6 +10,10 @@ Application for integrating Django and  https://online.atol.ru/
     :target: https://travis-ci.org/MyBook/django-atol
 .. image:: https://codecov.io/gh/MyBook/django-atol/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/MyBook/django-atol
+.. image:: https://img.shields.io/badge/docs-v3-yellow.svg
+    :target: https://t.me/atolonline
+    
+    
 
 Important limitations:
 
@@ -17,6 +21,7 @@ Important limitations:
     * Support Django 1.11+
     * PostgreSQL ≥ 9.4 (JSONB field)
     * only 1 purchase is supported in receipt (1 product)
+    * only v3 protocol version is supported
 
 Quick start
 -----------
