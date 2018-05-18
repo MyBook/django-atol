@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 import responses
 import pytest
+from django.test import override_settings
 
 from atol.core import AtolAPI
 from atol.exceptions import AtolRecoverableError, AtolUnrecoverableError
@@ -262,3 +263,25 @@ def test_atol_report_unrecoverable_errors(status, params, set_atol_token):
 
     with pytest.raises(AtolUnrecoverableError):
         atol.report(payment_uuid)
+
+
+def test_atol_api_base_url():
+    """
+    Проверяем base_url в случае если RECEIPTS_ATOL_BASE_URL не указан в settings
+    """
+    assert AtolAPI().base_url == 'https://online.atol.ru/possystem/v3'
+
+
+@pytest.mark.parametrize('settings_url, api_base_url', [
+    ('test_url', 'test_url'),
+    ('', 'https://online.atol.ru/possystem/v3'),
+    (None, 'https://online.atol.ru/possystem/v3')
+])
+def test_atol_api_base_url_customizing(settings_url, api_base_url):
+    """
+    Проверяем base_url в случае указания различных конфигураций RECEIPTS_ATOL_BASE_URL в settings
+    :param settings_url: url в settings
+    :param api_base_url: url, который должен быть в AtolAPI
+    """
+    with override_settings(RECEIPTS_ATOL_BASE_URL=settings_url):
+        assert AtolAPI().base_url == api_base_url
