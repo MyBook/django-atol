@@ -15,7 +15,7 @@ ReceiptReport = namedtuple('ReceiptReport', ['uuid', 'data'])
 
 
 class AtolAPI(object):
-    base_url = 'https://online.atol.ru/possystem/v3'
+    base_url = getattr(settings, 'RECEIPTS_ATOL_BASE_URL', 'https://online.atol.ru/possystem/v3')
     request_timeout = 5
 
     def _obtain_new_token(self):
