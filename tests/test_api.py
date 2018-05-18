@@ -267,7 +267,7 @@ def test_atol_report_unrecoverable_errors(status, params, set_atol_token):
 
 def test_atol_api_base_url():
     """
-    Проверяем base_url в случае если RECEIPTS_ATOL_BASE_URL не указан в settings
+    We Check base_url in case that RECEIPTS_ATOL_BASE_URL is not specified in settings
     """
     assert AtolAPI().base_url == 'https://online.atol.ru/possystem/v3'
 
@@ -279,9 +279,9 @@ def test_atol_api_base_url():
 ])
 def test_atol_api_base_url_customizing(settings_url, api_base_url):
     """
-    Проверяем base_url в случае указания различных конфигураций RECEIPTS_ATOL_BASE_URL в settings
-    :param settings_url: url в settings
-    :param api_base_url: url, который должен быть в AtolAPI
+    We check base_url in case of specifying RECEIPTS_ATOL_BASE_URL as different values in settings
+    :param settings_url: url in settings
+    :param api_base_url: url, which must be in AtolAPI
     """
     with override_settings(RECEIPTS_ATOL_BASE_URL=settings_url):
         assert AtolAPI().base_url == api_base_url
