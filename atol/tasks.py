@@ -64,7 +64,7 @@ def atol_create_receipt(self, receipt_id):
             )
 
 
-@shared_task(name='atol_receive_receipt_report', bind=True, max_retries=4, time_limit=60, soft_time_limit=45)
+@shared_task(name='atol_receive_receipt_report', bind=True, max_retries=8, time_limit=60, soft_time_limit=45)
 def atol_receive_receipt_report(self, receipt_id):
     """
     Attempt to retrieve a receipt report for given receipt_id
