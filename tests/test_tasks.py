@@ -93,8 +93,9 @@ def test_atol_failing_receive_report_progressive_countdown():
 
     with mock.patch.object(atol_receive_receipt_report, 'retry', wraps=atol_receive_receipt_report.retry) as task_mock:
         atol_receive_receipt_report.delay(receipt.id)
-        assert len(task_mock.mock_calls) == 5
-        assert [call[1]['countdown'] for call in task_mock.call_args_list] == [60, 120, 420, 1200, 3240]
+        assert len(task_mock.mock_calls) == 9
+        countdown_prognosis = [60, 120, 420, 1200, 3240, 8880, 24180, 65760, 178800]
+        assert [call[1]['countdown'] for call in task_mock.call_args_list] == countdown_prognosis
 
     receipt.refresh_from_db()
     assert receipt.status == 'failed'
