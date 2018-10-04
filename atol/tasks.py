@@ -124,10 +124,11 @@ def atol_retry_created_receipts():
     """
     Receipt = apps.get_model('atol', 'Receipt')
     now = timezone.now()
+    retry_date_range = (now - timedelta(days=2), now - timedelta(days=1))
 
     created_receipts = (Receipt.objects
                         .filter(status=ReceiptStatus.created,
-                                created_at__range=(now - timedelta(days=1), now)))
+                                created_at__range=retry_date_range))
 
     logger.info('there are %s receipts waiting to be initiated', created_receipts.count())
 
@@ -143,10 +144,11 @@ def atol_retry_initiated_receipts():
     """
     Receipt = apps.get_model('atol', 'Receipt')
     now = timezone.now()
+    retry_date_range = (now - timedelta(days=2), now - timedelta(days=1))
 
     initiated_receipts = (Receipt.objects
                           .filter(status=ReceiptStatus.initiated,
-                                  initiated_at__range=(now - timedelta(days=1), now)))
+                                  initiated_at__range=retry_date_range))
 
     logger.info('there are %s initiated receipts waiting for report', initiated_receipts.count())
 
