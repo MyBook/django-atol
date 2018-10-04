@@ -155,12 +155,14 @@ def test_retry_created_receipt_payments():
     now = timezone.now()
 
     with freeze_time(now - datetime.timedelta(hours=3)):
-        receipt1 = Receipt.objects.create()
-    with freeze_time(now - datetime.timedelta(hours=18)):
-        receipt2 = Receipt.objects.create()
-    with freeze_time(now - datetime.timedelta(hours=28)):
         Receipt.objects.create()
-    with freeze_time(now - datetime.timedelta(hours=3)):
+    with freeze_time(now - datetime.timedelta(hours=25)):
+        receipt1 = Receipt.objects.create()
+    with freeze_time(now - datetime.timedelta(hours=31)):
+        receipt2 = Receipt.objects.create()
+    with freeze_time(now - datetime.timedelta(hours=49)):
+        Receipt.objects.create()
+    with freeze_time(now - datetime.timedelta(hours=31)):
         Receipt.objects.create(status='failed')
     Receipt.objects.create(status='received')
 
@@ -173,10 +175,11 @@ def test_retry_created_receipt_payments():
 def test_retry_initiated_receipt_payments():
     now = timezone.now()
 
-    receipt1 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=1))
-    receipt2 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=18))
-    Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=28))
-    Receipt.objects.create(status='failed', initiated_at=now - datetime.timedelta(hours=3))
+    receipt1 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=25))
+    receipt2 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=31))
+    Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=1))
+    Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=49))
+    Receipt.objects.create(status='failed', initiated_at=now - datetime.timedelta(hours=25))
     Receipt.objects.create(status='received')
 
     with mock.patch.object(atol_receive_receipt_report, 'delay') as task_mock:
