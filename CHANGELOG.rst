@@ -8,7 +8,6 @@ Changelog
 * Changed `atol_retry_created_receipts` and `atol_retry_initiated_receipts` tasks retry period.
   Now it will retry receipts from day before yesterday
 
-
 1.2.1 (2018-05-22)
 ------------------
 * AtolAPI.base_url specifying in settings
