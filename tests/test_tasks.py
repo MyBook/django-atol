@@ -93,8 +93,9 @@ def test_atol_failing_receive_report_progressive_countdown():
 
     with mock.patch.object(atol_receive_receipt_report, 'retry', wraps=atol_receive_receipt_report.retry) as task_mock:
         atol_receive_receipt_report.delay(receipt.id)
-        assert len(task_mock.mock_calls) == 5
-        assert [call[1]['countdown'] for call in task_mock.call_args_list] == [60, 120, 420, 1200, 3240]
+        assert len(task_mock.mock_calls) == 9
+        countdown_prognosis = [60, 120, 420, 1200, 3240, 8880, 24180, 65760, 178800]
+        assert [call[1]['countdown'] for call in task_mock.call_args_list] == countdown_prognosis
 
     receipt.refresh_from_db()
     assert receipt.status == 'failed'
@@ -154,12 +155,14 @@ def test_retry_created_receipt_payments():
     now = timezone.now()
 
     with freeze_time(now - datetime.timedelta(hours=3)):
-        receipt1 = Receipt.objects.create()
-    with freeze_time(now - datetime.timedelta(hours=18)):
-        receipt2 = Receipt.objects.create()
-    with freeze_time(now - datetime.timedelta(hours=28)):
         Receipt.objects.create()
-    with freeze_time(now - datetime.timedelta(hours=3)):
+    with freeze_time(now - datetime.timedelta(hours=25)):
+        receipt1 = Receipt.objects.create()
+    with freeze_time(now - datetime.timedelta(hours=31)):
+        receipt2 = Receipt.objects.create()
+    with freeze_time(now - datetime.timedelta(hours=49)):
+        Receipt.objects.create()
+    with freeze_time(now - datetime.timedelta(hours=31)):
         Receipt.objects.create(status='failed')
     Receipt.objects.create(status='received')
 
@@ -172,10 +175,11 @@ def test_retry_created_receipt_payments():
 def test_retry_initiated_receipt_payments():
     now = timezone.now()
 
-    receipt1 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=1))
-    receipt2 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=18))
-    Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=28))
-    Receipt.objects.create(status='failed', initiated_at=now - datetime.timedelta(hours=3))
+    receipt1 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=25))
+    receipt2 = Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=31))
+    Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=1))
+    Receipt.objects.create(status='initiated', initiated_at=now - datetime.timedelta(hours=49))
+    Receipt.objects.create(status='failed', initiated_at=now - datetime.timedelta(hours=25))
     Receipt.objects.create(status='received')
 
     with mock.patch.object(atol_receive_receipt_report, 'delay') as task_mock:
