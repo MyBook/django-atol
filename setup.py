@@ -28,7 +28,7 @@ requirements = [
     'requests>=2.10.0',
     'python-dateutil>=2.5.3',
     'django-model-utils>=3.0.0',
-    'celery>=3.1.25',
+    'celery==3.1.26',
     'shortuuid>=0.5.0',
 ]
 
