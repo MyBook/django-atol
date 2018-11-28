@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+1.3.0 (2018-11-28)
+------------------
+* Support Atol protocol v4 (FFD 1.05)
+
 1.2.2 (2018-10-08)
 ------------------
 * Change maximum retry counts for task `atol_receive_receipt_report`. Now its awaiting report for 29 hours.
