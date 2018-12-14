@@ -5,6 +5,8 @@ from dateutil.parser import parse as parse_date
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils.translation import ugettext_lazy as _
+from model_utils import Choices
 
 from atol import exceptions
 
@@ -16,6 +18,15 @@ ReceiptReport = namedtuple('ReceiptReport', ['uuid', 'data'])
 
 class AtolAPI(object):
     request_timeout = 5
+
+    ErrorCode = Choices(
+        (1, 'PROCESSING_FAILED', _('Ошибка обработки входящего документа')),
+        (32, 'VALIDATION_ERROR', _('Ошибка валидации входного чека')),
+        (33, 'ALREADY_EXISTS', _('Документ с переданными значениями <external_id> '
+                                 'и <group_code> уже существует в базе')),
+        (34, 'STATE_CHECK_NOT_FOUND', _('Документ еще не обработан')),
+        (40, 'BAD_REQUEST', _('Некорректный запрос')),
+    )
 
     def __init__(self):
         self.base_url = getattr(settings, 'RECEIPTS_ATOL_BASE_URL', None) or 'https://online.atol.ru/possystem/v4'
@@ -179,8 +190,8 @@ class AtolAPI(object):
                     'phone': user_phone or u'',
                 },
                 'company': {
-                    'email': 'foobar@mybook.ru',  # Уточнить !!!
-                    'sno': 'osn',  # Уточнить !!!
+                    'email': settings.RECEIPTS_ATOL_COMPANY_EMAIL,
+                    'sno': settings.RECEIPTS_ATOL_TAX_SYSTEM,
                     'inn': settings.RECEIPTS_ATOL_INN,
                     'payment_address': settings.RECEIPTS_ATOL_PAYMENT_ADDRESS,
                 },
@@ -189,8 +200,8 @@ class AtolAPI(object):
                     'price': purchase_price,
                     'quantity': 1,
                     'sum': purchase_price,
-                    'payment_method ': 'full_payment',  # Уточнить !!!
-                    'payment_object': 'payment',  # Уточнить !!!
+                    'payment_method ': settings.RECEIPTS_ATOL_PAYMENT_METHOD,
+                    'payment_object': settings.RECEIPTS_ATOL_PAYMENT_OBJECT,
                     'vat': {
                         'type': settings.RECEIPTS_ATOL_TAX_NAME,
                     },
@@ -211,9 +222,9 @@ class AtolAPI(object):
         # check for recoverable errors
         except exceptions.AtolClientRequestException as exc:
             logger.info('sell request with json %s failed with code %s', request_data, exc.error_data['code'])
-            if exc.error_data['code'] in (32, 40):
+            if exc.error_data['code'] in (self.ErrorCode.VALIDATION_ERROR, self.ErrorCode.BAD_REQUEST):
                 raise exceptions.AtolRecoverableError()
-            if exc.error_data['code'] == 33:
+            if exc.error_data['code'] == self.ErrorCode.ALREADY_EXISTS:
                 logger.info('sell request with json %s already accepted; uuid: %s',
                             request_data, exc.response_data['uuid'])
                 return NewReceipt(uuid=exc.response_data['uuid'], data=exc.response_data)
@@ -237,9 +248,9 @@ class AtolAPI(object):
         # check for recoverable errors
         except exceptions.AtolClientRequestException as exc:
             logger.info('report request for receipt %s failed with code %s', receipt_uuid, exc.error_data['code'])
-            if exc.error_data['code'] in (34, 40):
+            if exc.error_data['code'] in (self.ErrorCode.STATE_CHECK_NOT_FOUND, self.ErrorCode.BAD_REQUEST):
                 raise exceptions.AtolRecoverableError()
-            if exc.error_data['code'] == 1:
+            if exc.error_data['code'] == self.ErrorCode.PROCESSING_FAILED:
                 logger.info('report request for receipt %s was not processed: %s; '
                             'Must repeat the request with a new unique value <external_id>',
                             receipt_uuid, exc.response_data.get('text'))
