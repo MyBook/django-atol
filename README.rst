@@ -39,9 +39,13 @@ Quick start
     RECEIPTS_ATOL_PASSWORD = 'secret'
     RECEIPTS_ATOL_GROUP_CODE = 'ATOL-ProdTest-1'
     RECEIPTS_ATOL_TAX_NAME = 'vat18'
+    RECEIPTS_ATOL_TAX_SYSTEM = 'osn'
     RECEIPTS_ATOL_INN = '112233445573'
+    RECEIPTS_ATOL_PAYMENT_METHOD = 'full_payment'
+    RECEIPTS_ATOL_PAYMENT_OBJECT = 'service'
     RECEIPTS_ATOL_CALLBACK_URL = None
     RECEIPTS_ATOL_PAYMENT_ADDRESS = 'г. Москва, ул. Оранжевая, д.22 к.11'
+    RECEIPTS_ATOL_COMPANY_EMAIL = '<your_company>@gmail.com'
     RECEIPTS_OFD_URL_TEMPLATE = u'https://lk.platformaofd.ru/web/noauth/cheque?fn={fn}&fp={fp}'
 
 3. Add celery-beat tasks to CELERYBEAT_SCHEDULE settings like this::
@@ -107,4 +111,4 @@ Quick start
 Run tests
 ---------
 
-    python setup.py test
+    pytest
