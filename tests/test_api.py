@@ -136,6 +136,8 @@ def test_atol_create_receipt_workflow():
 
 
 @pytest.mark.parametrize('status,params', [
+    (200, {'body': ConnectionError()}),
+    (200, {'body': 'Wrong JSON'}),
     (500, {'body': b''}),
     (302, {'body': b''}),
     (400, {'json': {'error': {'code': 32}}}),
@@ -232,6 +234,8 @@ def test_atol_sell_expired_token_is_failed_to_renew(set_atol_token):
 
 
 @pytest.mark.parametrize('status,params', [
+    (200, {'body': ConnectionError()}),
+    (200, {'body': 'Wrong JSON'}),
     (500, {'body': b''}),
     (302, {'body': b''}),
     (400, {'json': {'error': {'code': 34}}}),
