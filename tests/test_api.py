@@ -54,7 +54,8 @@ def test_atol_create_receipt_workflow():
         'timestamp': '13.07.2017 18:32:49',
         'status': 'wait',
         'error': {
-            'code': 16,
+            'error_id': 'e710f5de-0b20-47de-8ae8-d193016c5a4e',
+            'code': 34,
             'text': 'Нет информации, попробуйте позднее',
             'type': 'system'
         },
@@ -83,7 +84,8 @@ def test_atol_create_receipt_workflow():
         'group_code': 'ATOL-ProdTest-1',
         'daemon_code': 'prod-agent-1',
         'device_code': 'KSR13.11-3-1',
-        'callback_url': ''
+        'external_id': 'TRF20801_1',
+        'callback_url': '',
     }
     url = ATOL_BASE_URL + '/ATOL-ProdTest-1/report/' + uid
     responses.add(responses.GET, url, status=200, json=data)
@@ -94,10 +96,11 @@ def test_atol_create_receipt_workflow():
         'timestamp': '13.07.2017 18:32:50',
         'status': 'fail',
         'error': {
-            'code': 10,
+            'error_id': '01b46c9d-f829-4ecf-b07c-7b096d0b985e',
+            'code': 33,
             'text': 'В системе существует чек с external_id : ec0ce0c6-7a31-4f45-b94f-a1442be3bb9c '
                     'и group_code: ATOL-ProdTest-1',
-            'type': 'system'
+            'type': 'system',
         }
     }
     url = ATOL_BASE_URL + '/ATOL-ProdTest-1/sell'
@@ -133,10 +136,12 @@ def test_atol_create_receipt_workflow():
 
 
 @pytest.mark.parametrize('status,params', [
+    (200, {'body': ConnectionError()}),
+    (200, {'body': 'Wrong JSON'}),
     (500, {'body': b''}),
     (302, {'body': b''}),
-    (400, {'json': {'error': {'code': 1}}}),
-    (400, {'json': {'error': {'code': 6}}}),
+    (400, {'json': {'error': {'code': 32}}}),
+    (400, {'json': {'error': {'code': 40}}}),
 ])
 @responses.activate
 def test_atol_sell_recoverable_errors(status, params, set_atol_token):
@@ -154,8 +159,8 @@ def test_atol_sell_recoverable_errors(status, params, set_atol_token):
 
 
 @pytest.mark.parametrize('status,params', [
-    (400, {'json': {'error': {'code': 3}}}),
-    (400, {'json': {'error': {'code': 22}}}),
+    (400, {'json': {'error': {'code': 31}}}),
+    (400, {'json': {'error': {'code': 51}}}),
 ])
 @responses.activate
 def test_atol_sell_unrecoverable_errors(status, params, set_atol_token):
@@ -193,7 +198,7 @@ def test_atol_sell_expired_token_is_renewed(set_atol_token, caches):
 
         receipt = atol.sell(**sell_params)
         assert receipt.uuid == receipt_uuid
-        assert resp_mock.calls[0].request.url.endswith('?tokenid=12345')
+        assert resp_mock.calls[0].request.headers['Token'] == '12345'
 
     # token is updated
     assert caches['default'].get(ATOL_AUTH_CACHE_KEY) == 'foobar'
@@ -209,7 +214,7 @@ def test_atol_sell_expired_token_is_renewed(set_atol_token, caches):
 
         receipt = atol.sell(**sell_params)
         assert receipt.uuid == anoher_receipt_uuid
-        assert resp_mock.calls[0].request.url.endswith('?tokenid=foobar')
+        assert resp_mock.calls[0].request.headers['Token'] == 'foobar'
 
 
 def test_atol_sell_expired_token_is_failed_to_renew(set_atol_token):
@@ -218,7 +223,7 @@ def test_atol_sell_expired_token_is_failed_to_renew(set_atol_token):
 
     with responses.RequestsMock(assert_all_requests_are_fired=True) as resp_mock:
         resp_mock.add(responses.POST, ATOL_BASE_URL + '/ATOL-ProdTest-1/sell', status=401)
-        resp_mock.add(responses.POST, ATOL_BASE_URL + '/getToken', status=400, json={'code': 19})
+        resp_mock.add(responses.POST, ATOL_BASE_URL + '/getToken', status=400, json={'code': 12})
 
         sell_params = dict(timestamp=datetime.now(), transaction_uuid=str(uuid4()),
                            purchase_name=u'Стандартная подписка на 1 месяц', purchase_price='199.99',
@@ -229,11 +234,12 @@ def test_atol_sell_expired_token_is_failed_to_renew(set_atol_token):
 
 
 @pytest.mark.parametrize('status,params', [
+    (200, {'body': ConnectionError()}),
+    (200, {'body': 'Wrong JSON'}),
     (500, {'body': b''}),
     (302, {'body': b''}),
-    (400, {'json': {'error': {'code': 7}}}),
-    (400, {'json': {'error': {'code': 12}}}),
-    (400, {'json': {'error': {'code': 16}}}),
+    (400, {'json': {'error': {'code': 34}}}),
+    (400, {'json': {'error': {'code': 40}}}),
 ])
 @responses.activate
 def test_atol_report_recoverable_errors(status, params, set_atol_token):
@@ -241,7 +247,7 @@ def test_atol_report_recoverable_errors(status, params, set_atol_token):
     set_atol_token('12345')
     payment_uuid = str(uuid4())
 
-    responses.add(responses.POST, ATOL_BASE_URL + '/ATOL-ProdTest-1/report/%s' % payment_uuid,
+    responses.add(responses.GET, ATOL_BASE_URL + '/ATOL-ProdTest-1/report/%s' % payment_uuid,
                   status=status, **params)
 
     with pytest.raises(AtolRecoverableError):
@@ -249,8 +255,8 @@ def test_atol_report_recoverable_errors(status, params, set_atol_token):
 
 
 @pytest.mark.parametrize('status,params', [
-    (400, {'json': {'error': {'code': 3}}}),
-    (400, {'json': {'error': {'code': 15}}}),
+    (400, {'json': {'error': {'code': 30}}}),
+    (400, {'json': {'error': {'code': 31}}}),
 ])
 @responses.activate
 def test_atol_report_unrecoverable_errors(status, params, set_atol_token):
@@ -269,13 +275,13 @@ def test_atol_api_base_url():
     """
     We Check base_url in case that RECEIPTS_ATOL_BASE_URL is not specified in settings
     """
-    assert AtolAPI().base_url == 'https://online.atol.ru/possystem/v3'
+    assert AtolAPI().base_url == 'https://online.atol.ru/possystem/v4'
 
 
 @pytest.mark.parametrize('settings_url, api_base_url', [
     ('test_url', 'test_url'),
-    ('', 'https://online.atol.ru/possystem/v3'),
-    (None, 'https://online.atol.ru/possystem/v3')
+    ('', 'https://online.atol.ru/possystem/v4'),
+    (None, 'https://online.atol.ru/possystem/v4')
 ])
 def test_atol_api_base_url_customizing(settings_url, api_base_url):
     """

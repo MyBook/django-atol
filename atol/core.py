@@ -5,6 +5,8 @@ from dateutil.parser import parse as parse_date
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils.translation import ugettext_lazy as _
+from model_utils import Choices
 
 from atol import exceptions
 
@@ -17,8 +19,17 @@ ReceiptReport = namedtuple('ReceiptReport', ['uuid', 'data'])
 class AtolAPI(object):
     request_timeout = 5
 
+    ErrorCode = Choices(
+        (1, 'PROCESSING_FAILED', _('Ошибка обработки входящего документа')),
+        (32, 'VALIDATION_ERROR', _('Ошибка валидации входного чека')),
+        (33, 'ALREADY_EXISTS', _('Документ с переданными значениями <external_id> '
+                                 'и <group_code> уже существует в базе')),
+        (34, 'STATE_CHECK_NOT_FOUND', _('Документ еще не обработан')),
+        (40, 'BAD_REQUEST', _('Некорректный запрос')),
+    )
+
     def __init__(self):
-        self.base_url = getattr(settings, 'RECEIPTS_ATOL_BASE_URL', None) or 'https://online.atol.ru/possystem/v3'
+        self.base_url = getattr(settings, 'RECEIPTS_ATOL_BASE_URL', None) or 'https://online.atol.ru/possystem/v4'
 
     def _obtain_new_token(self):
         """
@@ -29,8 +40,10 @@ class AtolAPI(object):
             'login': settings.RECEIPTS_ATOL_LOGIN,
             'pass': settings.RECEIPTS_ATOL_PASSWORD,
         })
-        # all codes other than 0 (new token) and 1 (existing token) are considered errors
-        if response_data.get('code') not in (0, 1):
+
+        error = response_data.get('error')
+        if error:
+            logger.error('fail obtained auth token due to %s', error['text'], extra={'data': error})
             raise exceptions.AtolAuthTokenException()
 
         auth_token = response_data['token']
@@ -73,8 +86,8 @@ class AtolAPI(object):
         """
         auth_token = self._get_auth_token()
 
-        params = {
-            'tokenid': auth_token
+        headers = {
+            'Token': auth_token
         }
 
         # signed requests contain group codes in front of the endpoint name
@@ -82,18 +95,18 @@ class AtolAPI(object):
                                                     endpoint=endpoint)
 
         try:
-            return self._request(method, endpoint, params=params, json=json)
+            return self._request(method, endpoint, headers=headers, json=json)
         except exceptions.AtolAuthTokenException:
             # token must have expired, try new one
-            logger.info('trying new token for request "%s" to endpoint %s with params=%s json=%s token=%s',
-                        method, endpoint, params, json, auth_token)
-            params.update({'tokenid': self._get_auth_token(force_renew=True)})
-            return self._request(method, endpoint, params=params, json=json)
+            logger.info('trying new token for request "%s" to endpoint %s with headers=%s json=%s',
+                        method, endpoint, headers, json)
+            headers.update({'Token': self._get_auth_token(force_renew=True)})
+            return self._request(method, endpoint, headers=headers, json=json)
 
     def _request(self, method, endpoint, params=None, headers=None, json=None):
         params = params or {}
         headers = headers or {}
-        headers.setdefault('Content-Type', 'application/json')
+        headers.setdefault('Content-Type', 'application/json; charset=utf-8')
 
         url = '{base_url}/{endpoint}'.format(base_url=self.base_url.rstrip('/'),
                                              endpoint=endpoint)
@@ -112,15 +125,9 @@ class AtolAPI(object):
 
         # error codes other than 2xx, 400, 401 are considered unexpected and yield an exception
         if response.status_code not in (200, 201, 400, 401):
-            try:
-                json_response = response.json()
-            except Exception:
-                json_response = None
             logger.warning('request %s %s with headers=%s, params=%s json=%s failed with status code %s: %s',
-                           method, url, headers, params, json, response.status_code, json_response,
-                           extra={'data': {'json_request': json,
-                                           'content': response.content,
-                                           'json_response': json_response}})
+                           method, url, headers, params, json, response.status_code, response.content,
+                           extra={'data': {'json_request': json, 'content': response.content}})
             raise exceptions.AtolRequestException()
 
         # 401 should be handled separately by the calling code
@@ -136,13 +143,13 @@ class AtolAPI(object):
                            extra={'data': {'content': response.content}})
             raise exceptions.AtolRequestException()
 
-        if response_data.get('error'):
-            logger.warning('received error response from atol url %s: %s',
-                           url, response_data['error'],
-                           extra={'data': {'json': json, 'params': params}})
+        error = response_data.get('error')
+        if error:
+            logger.warning('received error response from atol url %s due to %s', url, error.get('text', ''),
+                           extra={'data': {'json': json, 'params': params, 'error': error}})
             raise exceptions.AtolClientRequestException(response=response,
                                                         response_data=response_data,
-                                                        error_data=response_data['error'])
+                                                        error_data=error)
 
         return response_data
 
@@ -178,17 +185,26 @@ class AtolAPI(object):
             'external_id': params['transaction_uuid'],
             'timestamp': timestamp.strftime('%d.%m.%Y %H:%M:%S'),
             'receipt': {
-                # user supplied details
-                'attributes': {
+                'client': {
                     'email': user_email or u'',
                     'phone': user_phone or u'',
+                },
+                'company': {
+                    'email': settings.RECEIPTS_ATOL_COMPANY_EMAIL,
+                    'sno': settings.RECEIPTS_ATOL_TAX_SYSTEM,
+                    'inn': settings.RECEIPTS_ATOL_INN,
+                    'payment_address': settings.RECEIPTS_ATOL_PAYMENT_ADDRESS,
                 },
                 'items': [{
                     'name': params['purchase_name'],
                     'price': purchase_price,
                     'quantity': 1,
                     'sum': purchase_price,
-                    'tax': settings.RECEIPTS_ATOL_TAX_NAME,
+                    'payment_method ': settings.RECEIPTS_ATOL_PAYMENT_METHOD,
+                    'payment_object': settings.RECEIPTS_ATOL_PAYMENT_OBJECT,
+                    'vat': {
+                        'type': settings.RECEIPTS_ATOL_TAX_NAME,
+                    },
                 }],
                 'payments': [{
                     'sum': purchase_price,
@@ -197,9 +213,7 @@ class AtolAPI(object):
                 'total': purchase_price,
             },
             'service': {
-                'inn': settings.RECEIPTS_ATOL_INN,
                 'callback_url': settings.RECEIPTS_ATOL_CALLBACK_URL or u'',
-                'payment_address': settings.RECEIPTS_ATOL_PAYMENT_ADDRESS,
             }
         }
 
@@ -208,9 +222,9 @@ class AtolAPI(object):
         # check for recoverable errors
         except exceptions.AtolClientRequestException as exc:
             logger.info('sell request with json %s failed with code %s', request_data, exc.error_data['code'])
-            if exc.error_data['code'] in (1, 4, 5, 6):
+            if exc.error_data['code'] in (self.ErrorCode.VALIDATION_ERROR, self.ErrorCode.BAD_REQUEST):
                 raise exceptions.AtolRecoverableError()
-            if exc.error_data['code'] == 10:
+            if exc.error_data['code'] == self.ErrorCode.ALREADY_EXISTS:
                 logger.info('sell request with json %s already accepted; uuid: %s',
                             request_data, exc.response_data['uuid'])
                 return NewReceipt(uuid=exc.response_data['uuid'], data=exc.response_data)
@@ -234,9 +248,9 @@ class AtolAPI(object):
         # check for recoverable errors
         except exceptions.AtolClientRequestException as exc:
             logger.info('report request for receipt %s failed with code %s', receipt_uuid, exc.error_data['code'])
-            if exc.error_data['code'] in (7, 9, 12, 13, 14, 16):
+            if exc.error_data['code'] in (self.ErrorCode.STATE_CHECK_NOT_FOUND, self.ErrorCode.BAD_REQUEST):
                 raise exceptions.AtolRecoverableError()
-            if exc.error_data['code'] == 1:
+            if exc.error_data['code'] == self.ErrorCode.PROCESSING_FAILED:
                 logger.info('report request for receipt %s was not processed: %s; '
                             'Must repeat the request with a new unique value <external_id>',
                             receipt_uuid, exc.response_data.get('text'))
