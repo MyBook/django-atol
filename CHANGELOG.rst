@@ -1,7 +1,11 @@
 Changelog
 ---------
 
-1.3.0 (2018-11-28)
+1.3.1 (2018-12-19)
+------------------
+* Sell method: do not insert empty email or phone
+
+1.3.0 (2018-12-19)
 ------------------
 * Support Atol protocol v4 (FFD 1.05)
 
