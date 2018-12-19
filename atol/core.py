@@ -181,14 +181,17 @@ class AtolAPI(object):
         if isinstance(timestamp, str):
             timestamp = parse_date(timestamp)
 
+        client = {}
+        if user_email:
+            client['email'] = user_email
+        if user_phone:
+            client['phone'] = user_phone
+
         request_data = {
             'external_id': params['transaction_uuid'],
             'timestamp': timestamp.strftime('%d.%m.%Y %H:%M:%S'),
             'receipt': {
-                'client': {
-                    'email': user_email or u'',
-                    'phone': user_phone or u'',
-                },
+                'client': client,
                 'company': {
                     'email': settings.RECEIPTS_ATOL_COMPANY_EMAIL,
                     'sno': settings.RECEIPTS_ATOL_TAX_SYSTEM,

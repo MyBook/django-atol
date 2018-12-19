@@ -81,6 +81,6 @@ RECEIPTS_ATOL_INN = '112233445573'
 RECEIPTS_ATOL_PAYMENT_METHOD = 'full_payment'
 RECEIPTS_ATOL_PAYMENT_OBJECT = 'service'
 RECEIPTS_ATOL_CALLBACK_URL = None
-RECEIPTS_ATOL_PAYMENT_ADDRESS = 'г. Москва, ул. Оранжевая, д.22 к.11'
+RECEIPTS_ATOL_PAYMENT_ADDRESS = 'www.company.ru'
 RECEIPTS_ATOL_COMPANY_EMAIL = ''
 RECEIPTS_OFD_URL_TEMPLATE = u'https://lk.platformaofd.ru/web/noauth/cheque?fn={fn}&fp={fp}'
