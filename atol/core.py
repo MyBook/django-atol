@@ -153,6 +153,14 @@ class AtolAPI(object):
 
         return response_data
 
+    def _obtain_client_data(self, email, phone):
+        client = {}
+        if email:
+            client['email'] = email
+        if phone:
+            client['phone'] = phone
+        return client
+
     def sell(self, **params):
         """
         Register a new receipt for given payment details on the atol side.
@@ -181,17 +189,11 @@ class AtolAPI(object):
         if isinstance(timestamp, str):
             timestamp = parse_date(timestamp)
 
-        client = {}
-        if user_email:
-            client['email'] = user_email
-        if user_phone:
-            client['phone'] = user_phone
-
         request_data = {
             'external_id': params['transaction_uuid'],
             'timestamp': timestamp.strftime('%d.%m.%Y %H:%M:%S'),
             'receipt': {
-                'client': client,
+                'client': self._obtain_client_data(user_email, user_phone),
                 'company': {
                     'email': settings.RECEIPTS_ATOL_COMPANY_EMAIL,
                     'sno': settings.RECEIPTS_ATOL_TAX_SYSTEM,
