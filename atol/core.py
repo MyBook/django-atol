@@ -241,6 +241,9 @@ class AtolAPI(object):
 
         return NewReceipt(uuid=response_data['uuid'], data=response_data)
 
+    def sell_correction(self, **params):
+        pass
+
     def report(self, receipt_uuid):
         """
         The receipt may not yet be processed by the time of the request,
