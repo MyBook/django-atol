@@ -242,7 +242,73 @@ class AtolAPI(object):
         return NewReceipt(uuid=response_data['uuid'], data=response_data)
 
     def sell_correction(self, **params):
-        pass
+        """
+        Correction an exist receipt for given payment details on the atol side.
+        Receive receipt uuid for the created receipt.
+
+        :param timestamp: Payment datetime
+        :param transaction_uuid: Unique payment id (potentically across all organization projects' payments.
+                                 uuid4 should do fine.
+        :param purchase_name: Human readable name of the purchased product
+        :param purchase_price: The amount in roubles the user was billed with
+        """
+        purchase_price = params['purchase_price']
+        # convert decimals and strings to float, because atol does not accept those types
+        if not isinstance(purchase_price, int):
+            purchase_price = float(purchase_price)
+
+        timestamp = params['timestamp']
+        if isinstance(timestamp, str):
+            timestamp = parse_date(timestamp)
+
+        request_data = {
+            'external_id': params['transaction_uuid'],
+            'timestamp': timestamp.strftime('%d.%m.%Y %H:%M:%S'),
+            'correction': {
+                'company': {
+                    'sno': settings.RECEIPTS_ATOL_TAX_SYSTEM,
+                    'inn': settings.RECEIPTS_ATOL_INN,
+                    'payment_address': settings.RECEIPTS_ATOL_PAYMENT_ADDRESS,
+                },
+                'correction_info': {
+                    'type': 'self',
+                    'base_date': '25.07.2017',  # Уточнить!!!
+                    'base_number': '1175',  # Уточнить!!!
+                    'base_name': 'Акт технического заключения',  # Уточнить!!!
+                },
+                'payments': [{
+                    'type': 1,
+                    'sum': purchase_price,
+                }],
+                'vats': [{
+                    'type': settings.RECEIPTS_ATOL_TAX_NAME,
+                    'sum': 10.0
+                }]
+            },
+            'service': {
+                'callback_url': settings.RECEIPTS_ATOL_CALLBACK_URL or u'',
+            }
+        }
+
+        try:
+            response_data = self.request('post', 'sell_correction', json=request_data)
+        # check for recoverable errors
+        except exceptions.AtolClientRequestException as exc:
+            logger.info('sell_correction request with json %s failed with code %s',
+                        request_data, exc.error_data['code'])
+            if exc.error_data['code'] in (self.ErrorCode.VALIDATION_ERROR, self.ErrorCode.BAD_REQUEST):
+                raise exceptions.AtolRecoverableError()
+            if exc.error_data['code'] == self.ErrorCode.ALREADY_EXISTS:
+                logger.info('sell_correction request with json %s already accepted; uuid: %s',
+                            request_data, exc.response_data['uuid'])
+                return NewReceipt(uuid=exc.response_data['uuid'], data=exc.response_data)
+            # the rest of the errors are not recoverable
+            raise exceptions.AtolUnrecoverableError()
+        except Exception as exc:
+            logger.warning('sell_correction request with json %s failed due to %s', request_data, exc, exc_info=True)
+            raise exceptions.AtolRecoverableError()
+
+        return NewReceipt(uuid=response_data['uuid'], data=response_data)
 
     def report(self, receipt_uuid):
         """
