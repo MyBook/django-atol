@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+1.3.2 (2020-08-17)
+------------------
+* Upgrade shortuuid 0.5.0 -> 1.0.1
+
 1.3.1 (2018-12-19)
 ------------------
 * Sell method: do not insert empty email or phone
