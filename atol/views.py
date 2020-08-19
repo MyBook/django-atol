@@ -36,7 +36,12 @@ class ReceiptView(RedirectView):
             return HttpResponseNotFound(content=force_bytes(_('Чек не найден')))  # do not face 500 to user
 
     def get_redirect_url(self, *args, **kwargs):
-        uuid = shortuuid.decode(kwargs['short_uuid'])
+        try:
+            uuid = shortuuid.decode(kwargs['short_uuid'])
+        except ValueError:
+            logger.warning('can not convert %s to uuid with actual decode() method', kwargs['short_uuid'])
+            uuid = shortuuid.decode(kwargs['short_uuid'], legacy=True)
+
         receipt = get_object_or_404(Receipt, internal_uuid=uuid)
 
         if not receipt.content:

@@ -29,7 +29,7 @@ requirements = [
     'python-dateutil>=2.5.3',
     'django-model-utils>=3.0.0',
     'celery>=3.1.25',
-    'shortuuid>=0.5.0',
+    'shortuuid>=1.0.1',
 ]
 
 setup(
