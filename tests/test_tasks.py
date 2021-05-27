@@ -187,3 +187,20 @@ def test_retry_initiated_receipt_payments():
 
     assert len(task_mock.mock_calls) == 2
     assert {call[0][0] for call in task_mock.call_args_list} == {receipt1.id, receipt2.id}
+
+
+@responses.activate
+def test_canceled_receipt_ok():
+    now = timezone.now()
+    responses.add(responses.POST, ATOL_BASE_URL + '/getToken', status=200,
+                  json={'code': 0, 'token': 'foobar'})
+
+    receipt = Receipt.objects.create(user_email='foo@bar.com', purchase_price=707.1)
+
+    with mock.patch.object(AtolAPI, 'sell_refund', wraps=AtolAPI.sell_refund) as sell_refund_mock:
+        sell_refund_mock.return_value = NewReceipt(uuid='5869a6d9-1540-4ebb-a2a2-f1d11501f213', data=None)
+        atol_create_receipt(receipt.id)
+
+    receipt.refresh_from_db()
+    assert receipt.uuid == '5869a6d9-1540-4ebb-a2a2-f1d11501f213'
+    assert receipt.initiated_at > now

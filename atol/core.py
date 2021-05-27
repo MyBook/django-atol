@@ -161,11 +161,8 @@ class AtolAPI(object):
             client['phone'] = phone
         return client
 
-    def sell(self, **params):
+    def get_registration_data(self, params):
         """
-        Register a new receipt for given payment details on the atol side.
-        Receive receipt uuid for the created receipt.
-
         :param timestamp: Payment datetime
         :param transaction_uuid: Unique payment id (potentically across all organization projects' payments.
                                  uuid4 should do fine.
@@ -179,16 +176,13 @@ class AtolAPI(object):
         # receipt must contain either of the two
         if not (user_email or user_phone):
             raise exceptions.AtolPrepRequestException()
-
         purchase_price = params['purchase_price']
         # convert decimals and strings to float, because atol does not accept those types
         if not isinstance(purchase_price, int):
             purchase_price = float(purchase_price)
-
         timestamp = params['timestamp']
         if isinstance(timestamp, str):
             timestamp = parse_date(timestamp)
-
         request_data = {
             'external_id': params['transaction_uuid'],
             'timestamp': timestamp.strftime('%d.%m.%Y %H:%M:%S'),
@@ -221,6 +215,14 @@ class AtolAPI(object):
                 'callback_url': settings.RECEIPTS_ATOL_CALLBACK_URL or u'',
             }
         }
+        return request_data
+
+    def sell(self, **params):
+        """
+        Register a new receipt for given payment details on the atol side.
+        Receive receipt uuid for the created receipt.
+        """
+        request_data = self.get_registration_data(params)
 
         try:
             response_data = self.request('post', 'sell', json=request_data)
@@ -237,6 +239,30 @@ class AtolAPI(object):
             raise exceptions.AtolUnrecoverableError()
         except Exception as exc:
             logger.warning('sell request with json %s failed due to %s', request_data, exc, exc_info=True)
+            raise exceptions.AtolRecoverableError()
+
+        return NewReceipt(uuid=response_data['uuid'], data=response_data)
+
+    def sell_refund(self, **params):
+        """
+        Register a new receipt for given refunded payment details on the atol side.
+        Receive receipt uuid for the created receipt.
+        """
+        request_data = self.get_registration_data(params)
+
+        try:
+            response_data = self.request('post', 'sell_refund', json=request_data)
+        except exceptions.AtolClientRequestException as exc:
+            logger.info('sell_refund request with json %s failed with code %s', request_data, exc.error_data['code'])
+            if exc.error_data['code'] in (self.ErrorCode.VALIDATION_ERROR, self.ErrorCode.BAD_REQUEST):
+                raise exceptions.AtolRecoverableError()
+            if exc.error_data['code'] == self.ErrorCode.ALREADY_EXISTS:
+                logger.info('sell_refund request with json %s already accepted; uuid: %s',
+                            request_data, exc.response_data['uuid'])
+                return NewReceipt(uuid=exc.response_data['uuid'], data=exc.response_data)
+            raise exceptions.AtolUnrecoverableError()
+        except Exception as exc:
+            logger.warning('sell_refund request with json %s failed due to %s', request_data, exc, exc_info=True)
             raise exceptions.AtolRecoverableError()
 
         return NewReceipt(uuid=response_data['uuid'], data=response_data)

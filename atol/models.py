@@ -109,3 +109,13 @@ class Receipt(models.Model):
             raise NoEmailAndPhoneError
 
         return params
+
+    def get_cancel_receipt_params(self) -> dict:
+        return {
+            'user_email': f'{uuid4().hex}@example.com',
+            'timestamp': (self.received_at or self.created_at).isoformat(),
+            'transaction_uuid': str(uuid4()),
+            'purchase_price': self.content['payload']['total'],  # pylint: disable=unsubscriptable-object
+            'purchase_name': self.purchase_name or 'Оплата подписки',
+            'payment_type': 4  # consideration
+        }
