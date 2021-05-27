@@ -10,7 +10,7 @@ from django.utils import timezone
 from atol.core import AtolAPI, NewReceipt
 from atol.models import Receipt, ReceiptStatus
 from atol.tasks import (atol_create_receipt, atol_receive_receipt_report,
-                        atol_retry_created_receipts, atol_retry_initiated_receipts)
+                        atol_retry_created_receipts, atol_retry_initiated_receipts, atol_cancel_receipt)
 from tests import ATOL_BASE_URL
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -199,7 +199,7 @@ def test_canceled_receipt_ok():
 
     with mock.patch.object(AtolAPI, 'sell_refund', wraps=AtolAPI.sell_refund) as sell_refund_mock:
         sell_refund_mock.return_value = NewReceipt(uuid='5869a6d9-1540-4ebb-a2a2-f1d11501f213', data=None)
-        atol_create_receipt(receipt.id)
+        atol_cancel_receipt(receipt.id)
 
     receipt.refresh_from_db()
     assert receipt.uuid == '5869a6d9-1540-4ebb-a2a2-f1d11501f213'
