@@ -111,11 +111,9 @@ class Receipt(models.Model):
         return params
 
     def get_cancel_receipt_params(self) -> dict:
-        fake_email = f'{uuid4().hex}@example.com'
-        timestamp = self.received_at or self.created_at
         return {
-            'user_email': fake_email,
-            'timestamp': timestamp.isoformat(),
+            'user_email': uuid4().hex + '@example.com',
+            'timestamp': (self.received_at or self.created_at).isoformat(),
             'transaction_uuid': str(uuid4()),
             'purchase_price': self.content['payload']['total'],
             'purchase_name': self.purchase_name or 'Оплата подписки',
