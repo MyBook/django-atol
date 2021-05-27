@@ -208,6 +208,12 @@ def test_canceled_receipt_ok():
                                          'total': 707.1
                                      }})
 
+    with mock.patch.object(AtolAPI, 'sell_refund', wraps=AtolAPI.sell_refund) as sell_refund_mock:
+        sell_refund_mock.return_value = NewReceipt(uuid='5869a6d9-1540-4ebb-a2a2-f1d11501f213', data=None)
+        is_success = atol_cancel_receipt(receipt.id)
+
+    assert is_success
+
     data = receipt.get_cancel_receipt_params()
     assert data['user_email'].endswith('@example.com')
     assert data['payment_type'] == 4
@@ -216,10 +222,3 @@ def test_canceled_receipt_ok():
     assert data['purchase_name'] == 'Оплата подписки'
     assert len(data['transaction_uuid']) == 36
     assert data['transaction_uuid'] != str(receipt.uuid)
-
-    with mock.patch.object(AtolAPI, 'sell_refund', wraps=AtolAPI.sell_refund) as sell_refund_mock:
-        sell_refund_mock.return_value = NewReceipt(uuid='5869a6d9-1540-4ebb-a2a2-f1d11501f213', data=None)
-        atol_cancel_receipt(receipt.id)
-
-    receipt.refresh_from_db()
-    assert receipt.uuid == '5869a6d9-1540-4ebb-a2a2-f1d11501f213'

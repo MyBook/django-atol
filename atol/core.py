@@ -183,6 +183,10 @@ class AtolAPI(object):
         timestamp = params['timestamp']
         if isinstance(timestamp, str):
             timestamp = parse_date(timestamp)
+
+        payment_type = params.get('payment_type') or 1
+        original_fiscal_number = params.get('original_fiscal_number')
+
         request_data = {
             'external_id': params['transaction_uuid'],
             'timestamp': timestamp.strftime('%d.%m.%Y %H:%M:%S'),
@@ -207,7 +211,7 @@ class AtolAPI(object):
                 }],
                 'payments': [{
                     'sum': purchase_price,
-                    'type': 1,
+                    'type': payment_type,
                 }],
                 'total': purchase_price,
             },
@@ -215,6 +219,10 @@ class AtolAPI(object):
                 'callback_url': settings.RECEIPTS_ATOL_CALLBACK_URL or u'',
             }
         }
+
+        if original_fiscal_number:
+            request_data['receipt']['additional_check_props'] = str(original_fiscal_number)
+
         return request_data
 
     def sell(self, **params):
