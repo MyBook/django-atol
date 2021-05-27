@@ -111,11 +111,15 @@ class Receipt(models.Model):
         return params
 
     def get_cancel_receipt_params(self) -> dict:
+        receipt_data = self.content['payload']
+        purchase_price = receipt_data['total']
+        original_fiscal_number = receipt_data['fiscal_document_attribute']
         return {
             'user_email': uuid4().hex + '@example.com',
             'timestamp': (self.received_at or self.created_at).isoformat(),
             'transaction_uuid': str(uuid4()),
-            'purchase_price': self.content['payload']['total'],
+            'purchase_price': purchase_price,
             'purchase_name': self.purchase_name or 'Оплата подписки',
-            'payment_type': 4  # consideration
+            'payment_type': 4,  # consideration
+            'original_fiscal_number': original_fiscal_number
         }

@@ -191,11 +191,31 @@ def test_retry_initiated_receipt_payments():
 
 @responses.activate
 def test_canceled_receipt_ok():
-    now = timezone.now()
     responses.add(responses.POST, ATOL_BASE_URL + '/getToken', status=200,
                   json={'code': 0, 'token': 'foobar'})
 
-    receipt = Receipt.objects.create(user_email='foo@bar.com', purchase_price=707.1)
+    receipt = Receipt.objects.create(user_email='foo@bar.com', purchase_price=707.1,
+                                     received_at=datetime.datetime(2020, 1, 3, 12, 34, 56),
+                                     content={'payload': {
+                                         'ecr_registration_number': '0000932756018558',
+                                         'fiscal_document_attribute': 4146968358,
+                                         'fiscal_document_number': 40,
+                                         'fiscal_receipt_number': 1,
+                                         'fn_number': '8710000100942521',
+                                         'fns_site': 'www.nalog.ru',
+                                         'receipt_datetime': '26.07.2017 10:32:00',
+                                         'shift_number': 19,
+                                         'total': 12
+                                     }})
+
+    data = receipt.get_cancel_receipt_params()
+    assert data['user_email'].endswith('@example.com')
+    assert data['payment_type'] == 4
+    assert data['purchase_price'] == 707.1
+    assert data['timestamp'] == '2020-01-03T12:34:56'
+    assert data['purchase_name'] == 'Оплата подписки'
+    assert len(data['transaction_uuid']) == 36
+    assert data['transaction_uuid'] != str(receipt.uuid)
 
     with mock.patch.object(AtolAPI, 'sell_refund', wraps=AtolAPI.sell_refund) as sell_refund_mock:
         sell_refund_mock.return_value = NewReceipt(uuid='5869a6d9-1540-4ebb-a2a2-f1d11501f213', data=None)
@@ -203,4 +223,3 @@ def test_canceled_receipt_ok():
 
     receipt.refresh_from_db()
     assert receipt.uuid == '5869a6d9-1540-4ebb-a2a2-f1d11501f213'
-    assert receipt.initiated_at > now
