@@ -205,7 +205,7 @@ def test_canceled_receipt_ok():
                                          'fns_site': 'www.nalog.ru',
                                          'receipt_datetime': '26.07.2017 10:32:00',
                                          'shift_number': 19,
-                                         'total': 12
+                                         'total': 707.1
                                      }})
 
     data = receipt.get_cancel_receipt_params()
