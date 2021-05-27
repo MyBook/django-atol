@@ -229,16 +229,17 @@ class AtolAPI(object):
         try:
             response_data = self.request('post', method_name, json=request_data)
         except exceptions.AtolClientRequestException as exc:
-            logger.info('sell_refund request with json %s failed with code %s', request_data, exc.error_data['code'])
+            logger.info('%s request with json %s failed with code %s',
+                        method_name, request_data, exc.error_data['code'])
             if exc.error_data['code'] in (self.ErrorCode.VALIDATION_ERROR, self.ErrorCode.BAD_REQUEST):
                 raise exceptions.AtolRecoverableError()
             if exc.error_data['code'] == self.ErrorCode.ALREADY_EXISTS:
-                logger.info('sell_refund request with json %s already accepted; uuid: %s',
-                            request_data, exc.response_data['uuid'])
+                logger.info('%s request with json %s already accepted; uuid: %s',
+                            method_name, request_data, exc.response_data['uuid'])
                 return NewReceipt(uuid=exc.response_data['uuid'], data=exc.response_data)
             raise exceptions.AtolUnrecoverableError()
         except Exception as exc:
-            logger.warning('sell_refund request with json %s failed due to %s', request_data, exc, exc_info=True)
+            logger.warning('%s request with json %s failed due to %s', method_name, request_data, exc, exc_info=True)
             raise exceptions.AtolRecoverableError()
 
         return NewReceipt(uuid=response_data['uuid'], data=response_data)
