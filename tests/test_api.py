@@ -135,6 +135,43 @@ def test_atol_create_receipt_workflow():
     assert double_receipt.data['status'] == 'fail'
 
 
+@responses.activate
+def test_atol_create_refund_receipt_workflow():
+    uid = '973f3bef-1c39-40c9-abd0-33a91ab005ca'
+    # get Token
+    data = {
+        'code': 1,
+        'text': None,
+        'token': '84a50b3a6207421aba46834d650b42a0'
+    }
+    url = ATOL_BASE_URL + '/getToken'
+    responses.add(responses.POST, url, status=200, json=data)
+
+    # sell_refund
+    data = {
+        'uuid': uid,
+        'timestamp': '13.07.2017 18:32:49',
+        'status': 'wait',
+        'error': None
+    }
+    url = ATOL_BASE_URL + '/ATOL-ProdTest-1/sell_refund'
+    responses.add(responses.POST, url, status=200, json=data)
+
+    atol = AtolAPI()
+    now = datetime(2017, 11, 22, 10, 47, 32)
+    payment_uuid = str(uuid4())
+
+    sell_refund_params = dict(timestamp=now, transaction_uuid=payment_uuid,
+                              purchase_name=None, purchase_price='199.99',
+                              payment_type=4, original_fiscal_number=4146968358,
+                              user_email='user@example.com')
+
+    receipt = atol.sell_refund(**sell_refund_params)
+
+    assert receipt.uuid == '973f3bef-1c39-40c9-abd0-33a91ab005ca'
+    assert receipt.data['status'] == 'wait'
+
+
 @pytest.mark.parametrize('status,params', [
     (200, {'body': ConnectionError()}),
     (200, {'body': 'Wrong JSON'}),
