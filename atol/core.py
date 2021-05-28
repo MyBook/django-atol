@@ -220,7 +220,7 @@ class AtolAPI(object):
             }
         }
 
-        if original_fiscal_number:
+        if original_fiscal_number:   # pragma: no cover
             request_data['receipt']['additional_check_props'] = str(original_fiscal_number)
 
         return request_data
