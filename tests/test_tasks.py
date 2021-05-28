@@ -222,6 +222,7 @@ def test_canceled_receipt_ok():
     assert data['purchase_name'] == 'Оплата подписки'
     assert len(data['transaction_uuid']) == 36
     assert data['transaction_uuid'] != str(receipt.uuid)
+    assert data['original_fiscal_number'] == 4146968358
 
 
 @responses.activate
