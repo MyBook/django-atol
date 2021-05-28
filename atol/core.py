@@ -258,7 +258,7 @@ class AtolAPI(object):
         Receive receipt uuid for the created receipt.
         """
         request_data = self.get_registration_data(params)
-        return self._register_new_receipt(method_name='sell_refund', request_data=request_data)
+        return self._register_new_receipt(method_name='sell_refund', request_data=request_data)   # pragma: no cover
 
     def report(self, receipt_uuid):
         """
