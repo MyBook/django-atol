@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+1.3.3 (2021-06-28)
+------------------
+* Add task for sell_refund request
+
 1.3.2 (2020-08-17)
 ------------------
 * Upgrade shortuuid 0.5.0 -> 1.0.1

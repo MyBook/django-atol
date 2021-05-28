@@ -155,3 +155,22 @@ def atol_retry_initiated_receipts():
     for receipt in initiated_receipts.only('pk').iterator():
         logger.info('retrying initiated payment %s', receipt.id)
         atol_receive_receipt_report.delay(receipt.id)
+
+
+@shared_task(name='atol_cancel_receipt', time_limit=60)
+def atol_cancel_receipt(receipt_id):
+    atol = AtolAPI()
+    Receipt = apps.get_model('atol', 'Receipt')
+    receipt = Receipt.objects.get(id=receipt_id)
+
+    params = receipt.get_cancel_receipt_params()
+
+    try:
+        receipt_data = atol.sell_refund(**params)
+    except Exception as exc:
+        logger.warning('cancel: failed to init receipt %s with params %s due to %s', receipt.id, params, exc,
+                       exc_info=True, extra={'data': {'payment_params': params}})
+        return False
+    else:
+        logger.info('cancel: receipt %s successfully canceled with data: %s', receipt.id, receipt_data)
+        return True

@@ -161,11 +161,8 @@ class AtolAPI(object):
             client['phone'] = phone
         return client
 
-    def sell(self, **params):
+    def get_registration_data(self, params):
         """
-        Register a new receipt for given payment details on the atol side.
-        Receive receipt uuid for the created receipt.
-
         :param timestamp: Payment datetime
         :param transaction_uuid: Unique payment id (potentically across all organization projects' payments.
                                  uuid4 should do fine.
@@ -179,15 +176,16 @@ class AtolAPI(object):
         # receipt must contain either of the two
         if not (user_email or user_phone):
             raise exceptions.AtolPrepRequestException()
-
         purchase_price = params['purchase_price']
         # convert decimals and strings to float, because atol does not accept those types
         if not isinstance(purchase_price, int):
             purchase_price = float(purchase_price)
-
         timestamp = params['timestamp']
         if isinstance(timestamp, str):
             timestamp = parse_date(timestamp)
+
+        payment_type = params.get('payment_type') or 1
+        original_fiscal_number = params.get('original_fiscal_number')
 
         request_data = {
             'external_id': params['transaction_uuid'],
@@ -213,7 +211,7 @@ class AtolAPI(object):
                 }],
                 'payments': [{
                     'sum': purchase_price,
-                    'type': 1,
+                    'type': payment_type,
                 }],
                 'total': purchase_price,
             },
@@ -222,24 +220,45 @@ class AtolAPI(object):
             }
         }
 
+        if original_fiscal_number:   # pragma: no cover
+            request_data['receipt']['additional_check_props'] = str(original_fiscal_number)
+
+        return request_data
+
+    def _register_new_receipt(self, method_name, request_data):
         try:
-            response_data = self.request('post', 'sell', json=request_data)
-        # check for recoverable errors
+            response_data = self.request('post', method_name, json=request_data)
         except exceptions.AtolClientRequestException as exc:
-            logger.info('sell request with json %s failed with code %s', request_data, exc.error_data['code'])
+            logger.info('%s request with json %s failed with code %s',
+                        method_name, request_data, exc.error_data['code'])
             if exc.error_data['code'] in (self.ErrorCode.VALIDATION_ERROR, self.ErrorCode.BAD_REQUEST):
                 raise exceptions.AtolRecoverableError()
             if exc.error_data['code'] == self.ErrorCode.ALREADY_EXISTS:
-                logger.info('sell request with json %s already accepted; uuid: %s',
-                            request_data, exc.response_data['uuid'])
+                logger.info('%s request with json %s already accepted; uuid: %s',
+                            method_name, request_data, exc.response_data['uuid'])
                 return NewReceipt(uuid=exc.response_data['uuid'], data=exc.response_data)
-            # the rest of the errors are not recoverable
             raise exceptions.AtolUnrecoverableError()
         except Exception as exc:
-            logger.warning('sell request with json %s failed due to %s', request_data, exc, exc_info=True)
+            logger.warning('%s request with json %s failed due to %s', method_name, request_data, exc, exc_info=True)
             raise exceptions.AtolRecoverableError()
 
         return NewReceipt(uuid=response_data['uuid'], data=response_data)
+
+    def sell(self, **params):
+        """
+        Register a new receipt for given payment details on the atol side.
+        Receive receipt uuid for the created receipt.
+        """
+        request_data = self.get_registration_data(params)
+        return self._register_new_receipt(method_name='sell', request_data=request_data)
+
+    def sell_refund(self, **params):
+        """
+        Register a new receipt for given refunded payment details on the atol side.
+        Receive receipt uuid for the created receipt.
+        """
+        request_data = self.get_registration_data(params)
+        return self._register_new_receipt(method_name='sell_refund', request_data=request_data)
 
     def report(self, receipt_uuid):
         """
