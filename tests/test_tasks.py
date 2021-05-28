@@ -222,3 +222,28 @@ def test_canceled_receipt_ok():
     assert data['purchase_name'] == 'Оплата подписки'
     assert len(data['transaction_uuid']) == 36
     assert data['transaction_uuid'] != str(receipt.uuid)
+
+
+@responses.activate
+def test_canceled_receipt_not_ok():
+    responses.add(responses.POST, ATOL_BASE_URL + '/getToken', status=200,
+                  json={'code': 0, 'token': 'foobar'})
+
+    receipt = Receipt.objects.create(user_email='foo@bar.com', purchase_price=707.1,
+                                     received_at=datetime.datetime(2020, 1, 3, 12, 34, 56),
+                                     content={'payload': {
+                                         'ecr_registration_number': '0000932756018558',
+                                         'fiscal_document_attribute': 4146968358,
+                                         'fiscal_document_number': 40,
+                                         'fiscal_receipt_number': 1,
+                                         'fn_number': '8710000100942521',
+                                         'fns_site': 'www.nalog.ru',
+                                         'receipt_datetime': '26.07.2017 10:32:00',
+                                         'shift_number': 19,
+                                         'total': 707.1
+                                     }})
+
+    with mock.patch.object(AtolAPI, 'sell_refund', side_effect=Exception):
+        is_success = atol_cancel_receipt(receipt.id)
+
+    assert not is_success
