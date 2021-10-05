@@ -203,7 +203,7 @@ class AtolAPI(object):
                     'price': purchase_price,
                     'quantity': 1,
                     'sum': purchase_price,
-                    'payment_method ': settings.RECEIPTS_ATOL_PAYMENT_METHOD,
+                    'payment_method': settings.RECEIPTS_ATOL_PAYMENT_METHOD,
                     'payment_object': settings.RECEIPTS_ATOL_PAYMENT_OBJECT,
                     'vat': {
                         'type': settings.RECEIPTS_ATOL_TAX_NAME,

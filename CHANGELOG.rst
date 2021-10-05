@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+1.3.4 (2021-10-05)
+------------------
+* Fix bug with payment_method parameter
+
 1.3.3 (2021-06-28)
 ------------------
 * Add task for sell_refund request
