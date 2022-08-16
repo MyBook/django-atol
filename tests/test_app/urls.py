@@ -1,6 +1,6 @@
-from django.conf.urls import url
+from django.urls import re_path
 from atol.views import ReceiptView
 
 urlpatterns = [
-    url(r'^r/(?P<short_uuid>[\w]+)/$', ReceiptView.as_view(), name='receipt'),
+    re_path(r'^r/(?P<short_uuid>[\w]+)/$', ReceiptView.as_view(), name='receipt'),
 ]
