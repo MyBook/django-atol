@@ -6,7 +6,7 @@ from django.http import HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.views.generic import RedirectView
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from atol.models import Receipt
 from atol.exceptions import MissingReceipt
