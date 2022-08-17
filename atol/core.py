@@ -5,7 +5,7 @@ from dateutil.parser import parse as parse_date
 
 from django.conf import settings
 from django.core.cache import cache
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from model_utils import Choices
 
 from atol import exceptions

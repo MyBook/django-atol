@@ -52,7 +52,9 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'atol'
+        'NAME': 'atol',
+        'PORT': os.environ['PGPORT'],
+        'USER': os.environ['PGUSER'],
     }
 }
 

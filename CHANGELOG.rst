@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+1.4.0 (2022-08-17)
+------------------
+* Add Django 4.0 support
+* Add Python ≥ 3.7 and Django ≥ 3.0 CI tests
+* Upgrade CI Linux dist to Ubuntu 18.04 (Bionic) for Python 3.10 tests
+* Upgrade CI Postgres version to 11 for Django 4.x tests
+
 1.3.4 (2021-10-05)
 ------------------
 * Fix bug with payment_method parameter
