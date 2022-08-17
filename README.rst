@@ -19,7 +19,7 @@ Important limitations:
 
     * Python 3.5+
     * Support Django 1.11+
-    * PostgreSQL ≥ 9.4 (JSONB field)
+    * PostgreSQL ≥ 9.4 (JSONB field) (PostgreSQL ≥ 11 for Django 4.0)
     * only 1 purchase is supported in receipt (1 product)
     * only v3 protocol version is supported
 
