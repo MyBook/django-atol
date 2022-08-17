@@ -18,6 +18,7 @@ addons:
     - postgresql-client-11
 before_install:
   - pip install codecov
+  - cat /etc/postgresql/11/main/pg_hba.conf
 after_success:
   - codecov
 
@@ -34,5 +35,5 @@ deploy:
 
 env:
   global:
-  - PGPORT=5433
-  - PGUSER=travis
+  - PGPORT=5432
+  - PGUSER=postgres
