@@ -1,6 +1,10 @@
 Changelog
 ---------
 
+1.4.1 (2022-09-13)
+------------------
+* Fix JSONField module for django>=3.1
+
 1.4.0 (2022-08-17)
 ------------------
 * Add Django 4.0 support
