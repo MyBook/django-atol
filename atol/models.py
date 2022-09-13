@@ -2,7 +2,6 @@ import logging
 from uuid import uuid4
 
 import shortuuid
-from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -44,7 +43,7 @@ class Receipt(models.Model):
                               default=ReceiptStatus.created)
     uuid = models.TextField(_('Идентификатор чека'), null=True, editable=False,
                             help_text=_('Идентификатор чека платежа в системе оператора'))
-    content = JSONField(_('Содержимое чека'), null=True, editable=False)
+    content = models.JSONField(_('Содержимое чека'), null=True, editable=False)
 
     user_email = models.CharField(_('Email пользователя'), max_length=254, null=True)
     user_phone = models.CharField(_('Телефон пользователя'), max_length=32, null=True)
